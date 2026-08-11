@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>미소녀 수박게임 + 전투 머지 에디션 (메뉴 분리)</title>
+    <title>미소녀 수박게임 + RPG 에디션</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; touch-action: none; }
@@ -20,50 +20,60 @@
             display: flex; flex-direction: column;
             box-shadow: 0 10px 30px rgba(185, 160, 230, 0.4); overflow: hidden;
         }
-        
         @media (min-width: 421px) {
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
+
+        /* ================= [ 상단 프로필/상태/설정 바 (신규) ] ================= */
+        #top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; background: #fff; border-bottom: 2px solid #e8dff5; flex-shrink: 0; z-index: 20;
+        }
+        .profile-pic { 
+            width: 32px; height: 32px; background: #e8dff5; border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; font-size: 18px; border: 2px solid #b9a0e6; 
+        }
+        .top-stats { display: flex; gap: 10px; }
+        .stat-badge { 
+            background: #fdfbf7; padding: 4px 10px; border-radius: 12px; 
+            font-size: 13px; font-weight: bold; border: 1px solid #e8dff5; display: flex; align-items: center; gap: 4px;
+        }
+        .settings-btn { font-size: 20px; cursor: pointer; }
 
         /* ================= [ SPA 뷰 컨테이너 구조 ] ================= */
         #main-content {
             flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden;
         }
-
         .view-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; background: #fdfbf7; overflow-y: auto; touch-action: auto;
         }
-        .view-container.active {
-            display: flex; /* 활성화된 뷰만 화면에 표시 */
-        }
-        
-        /* 홈(게임) 뷰는 투명하게 유지하여 그라데이션 배경을 씀 */
+        .view-container.active { display: flex; }
         #view-home { background: transparent; overflow: hidden; touch-action: none; }
 
-        /* ================= [ 뷰 1: 홈 (게임 화면) ] ================= */
+        /* ================= [ 뷰 1: 홈 (전투 구역 축소) ] ================= */
         #board-section {
-            flex-shrink: 0; height: 85px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
-            display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 5px 10px; z-index: 10;
+            flex-shrink: 0; height: 60px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
+            display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 2px 10px; z-index: 10;
         }
-        .board-header { font-weight: bold; color: #8e7cc3; margin-bottom: 4px; font-size: 11px;}
+        .board-header { font-weight: bold; color: #8e7cc3; margin-bottom: 2px; font-size: 11px;}
         
         #battle-stage {
-            width: 90%; height: 50px; background-color: #f1e9fb;
+            width: 90%; height: 36px; background-color: #f1e9fb;
             background-image: 
                 linear-gradient(90deg, rgba(255,255,255,0.7) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.7) 75%, transparent 75%, transparent),
-                linear-gradient(to top, #b9a0e6 0%, #b9a0e6 10px, transparent 10px);
-            background-size: 40px 100%, 100% 100%; border: 2px solid #b9a0e6; border-radius: 8px; position: relative; overflow: hidden;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05); animation: scrollBg 1.2s linear infinite;
+                linear-gradient(to top, #b9a0e6 0%, #b9a0e6 6px, transparent 6px);
+            background-size: 30px 100%, 100% 100%; border: 2px solid #b9a0e6; border-radius: 8px; position: relative; overflow: hidden;
+            animation: scrollBg 1s linear infinite;
         }
-        @keyframes scrollBg { from { background-position: 0 0, 0 0; } to { background-position: -40px 0, 0 0; } }
+        @keyframes scrollBg { from { background-position: 0 0, 0 0; } to { background-position: -30px 0, 0 0; } }
 
-        .character { position: absolute; font-size: 28px; top: 6px; transition: all 0.2s ease-out; }
-        .hero { left: 40%; margin-left: -14px; transform: scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
-        .hero.attack { transform: scaleX(-1) translateX(-30px) rotate(-20deg) scale(1.2); }
-        .enemy { right: -50px; opacity: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
-        .enemy.slide-in { right: 15%; opacity: 1; }
-        .enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
+        .character { position: absolute; font-size: 20px; top: 4px; transition: all 0.2s ease-out; }
+        .hero { left: 40%; margin-left: -10px; transform: scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .hero.attack { transform: scaleX(-1) translateX(-20px) rotate(-20deg) scale(1.2); }
+        .enemy { right: -40px; opacity: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .enemy.slide-in { right: 20%; opacity: 1; }
+        .enemy.explode { right: 20%; animation: explodeAnim 0.4s forwards ease-out; }
         @keyframes explodeAnim { 
             0% { transform: scale(1); opacity: 1; filter: brightness(1); } 
             50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 10px #ff4757); } 
@@ -76,58 +86,53 @@
         }
         #game-section canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        #preview-ball { position: absolute; top: 50px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; opacity: 0.9; display: none; }
+        #preview-ball { position: absolute; top: 35px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; opacity: 0.9; display: none; }
         #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
-        #deadline-line { position: absolute; top: 70px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
+        #deadline-line { position: absolute; top: 65px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
+        
         #warning-banner {
-            position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
+            position: absolute; top: 75px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
         }
         @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.05); } }
 
+        /* ================= [ 게임 하단 UI (버튼 5개) ] ================= */
         #ui-section {
-            flex-shrink: 0; background: #ffb3c6; padding: 10px 15px; display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid #b9a0e6; z-index: 10;
+            flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10;
         }
-        .stats-bar { display: flex; justify-content: space-between; align-items: flex-start; color: #4a4e69; font-weight: bold; font-size: 15px; margin-bottom: 6px; }
-        .stat-box { background: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; }
-        .stat-box span { color: #d81b60; margin-right: 6px; }
+        #recharge-info { 
+            font-size: 11px; color: #d81b60; font-weight: bold; text-align: center; margin-bottom: 4px; display: none; 
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+        .ui-guide { color: #6a4c9c; font-size: 10px; text-align: center; margin-bottom: 6px; font-weight: bold; }
         
-        #recharge-info { font-size: 10px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); margin-top: 4px; display: none; text-align: left; padding-left: 4px; }
-        
-        .item-group { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+        .item-group { display: flex; justify-content: space-between; align-items: flex-end; gap: 6px; }
         .btn-item {
-            flex: 1; padding: 4px 0; border: 2px solid #fff; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            flex: 1; padding: 6px 0; border: 2px solid #fff; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
         }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
-        .btn-item span { font-size: 14px; margin-bottom: 2px; display: block; text-shadow: none; }
-        .btn-auto { background: #b3e5fc; box-shadow: 0 4px 0 #4fc3f7; color: #0277bd; text-shadow: none; }
-        .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; transform: translateY(4px); text-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
+        .btn-item span { font-size: 15px; margin-bottom: 2px; display: block; text-shadow: none; }
+        
+        /* 배수 버튼 (맨 좌측) */
+        .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; color: #fff; }
+        /* 뿅망치, 쉐이크, 틸트 */
         .btn-hammer { background: #82ccdd; box-shadow: 0 4px 0 #60a3bc; } 
         .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; color: #574b90; } 
         .btn-tilt { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
         .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); }
-
-        .multiplier-group { display: flex; justify-content: space-between; gap: 4px; }
-        .btn-mult {
-            flex: 1; padding: 6px 0; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; color: #8e7cc3; background: #fff; cursor: pointer; box-shadow: 0 3px 0 #d1c4e9; transition: all 0.1s;
-        }
-        .btn-mult:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
-        .btn-mult.active { background: #b9a0e6; color: white; box-shadow: 0 3px 0 #9575cd; }
+        /* 오토 버튼 (중앙, 눈에 띄게) */
+        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; color: #8e7cc3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
+        .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); text-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
 
 
         /* ================= [ 제네릭 뷰 스타일 (캐릭터, 상점 등) ] ================= */
-        .view-title {
-            background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0;
-        }
+        .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; }
         .view-content { padding: 20px; text-align: center; flex: 1; }
 
-        /* 캐릭터 그리드 */
+        /* 캐릭터 도감 그리드 */
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
-        .char-item {
-            background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5;
-        }
+        .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
         .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
-
 
         /* ================= [ 공통 하단 네비게이션 바 ] ================= */
         #bottom-nav {
@@ -142,33 +147,38 @@
         .nav-item.active { color: #d81b60; }
         .nav-item.active .icon { transform: translateY(-3px) scale(1.1); filter: grayscale(0); opacity: 1; }
 
-
-        /* 플로팅 텍스트 & 오버레이 */
+        /* 공통 플로팅 및 오버레이 */
         .floating-text {
-            position: absolute; font-weight: bold; font-size: 20px; color: #fff; 
+            position: absolute; font-weight: bold; font-size: 18px; color: #fff; 
             text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69; pointer-events: none; z-index: 100; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center;
         }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
         
-        .overlay {
-            position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.85); color: #4a4e69; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 2000; display: none; backdrop-filter: blur(5px);
-        }
+        .overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.85); color: #4a4e69; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 2000; display: none; backdrop-filter: blur(5px); }
         .action-btn { margin-top:20px; padding: 12px 24px; font-size:16px; border-radius:12px; border:2px solid #fff; background:#ffb3c6; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 0 #f78fb3; transition: all 0.1s; }
         .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        
         #gyro-debug { position: absolute; bottom: 65px; left: 10px; font-size: 11px; color: #b9a0e6; z-index: 999; font-weight: bold; pointer-events: none;}
     </style>
 </head>
 <body>
 
 <div id="app">
+    <!-- 상단 고정 상태바 (에너지/골드/설정) -->
+    <div id="top-bar">
+        <div class="profile-pic">👩</div>
+        <div class="top-stats">
+            <div class="stat-badge">⚡<span id="val-energy">50 / 50</span></div>
+            <div class="stat-badge">💰<span id="val-gold">0</span></div>
+        </div>
+        <div class="settings-btn">⚙️</div>
+    </div>
+
     <!-- 메인 콘텐츠 영역 (화면 전환됨) -->
     <div id="main-content">
-        
         <!-- 뷰 1: 홈 (게임 메인) -->
         <div id="view-home" class="view-container active">
             <div id="board-section">
-                <div class="board-header">⚔️ 구슬을 합성해 몬스터를 처치하세요!</div>
+                <div class="board-header">⚔️ 몬스터 처치!</div>
                 <div id="battle-stage">
                     <div id="hero" class="character hero">🤺</div>
                     <div id="enemy" class="character enemy">🦇</div>
@@ -180,40 +190,32 @@
                 <div id="warning-banner">⚠️ 위험! 5.0초</div>
                 <div id="drop-line"></div>
                 <img id="preview-ball" src="" alt="preview">
-                <!-- Matter.js 캔버스가 여기에 삽입됨 -->
+                <!-- 캔버스가 삽입됨 -->
             </div>
 
             <div id="ui-section">
-                <div class="stats-bar">
-                    <div style="display:flex; flex-direction:column;">
-                        <div class="stat-box"><span>⚡에너지</span> <div id="val-energy">50</div></div>
-                        <div id="recharge-info">15초 후에 50 에너지가 충전 됩니다. (15s)</div>
-                    </div>
-                    <div class="stat-box" style="align-self: flex-start;"><span>💰골드</span> <div id="val-gold">0</div></div>
-                </div>
+                <div id="recharge-info">15s 이후 10에너지 충전</div>
+                <div class="ui-guide">상단 영역을 터치해 드롭하세요!</div>
                 
                 <div class="item-group">
-                    <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
-                        <span>🤖</span><div id="auto-label">오토: OFF</div>
+                    <!-- 토글 방식의 배수 버튼 -->
+                    <button class="btn-item btn-mult" id="btn-mult" onclick="toggleMultiplier()">
+                        <span id="mult-label">x1</span><div style="font-size:9px">배수</div>
                     </button>
-                    <button class="btn-item btn-hammer" onclick="useItem('hammer')"><span>🔨</span>뿅망치</button>
+                    
+                    <button class="btn-item btn-hammer" onclick="useItem('hammer')"><span>🔨</span>망치</button>
+                    
+                    <!-- 오토 버튼 중앙 -->
+                    <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
+                        <span style="font-size: 20px; margin-top:-2px;">🤖</span><div id="auto-label">오토: OFF</div>
+                    </button>
+                    
                     <button class="btn-item btn-shake" onclick="useItem('shake')"><span>🌪️</span>쉐이크</button>
+                    
                     <button class="btn-item btn-tilt" id="btn-tilt" onclick="useItem('tilt')">
-                        <span>📱</span>
-                        <div id="tilt-label">자이로 틸트</div>
+                        <span>📱</span><div id="tilt-label">자이로</div>
                         <div id="tilt-timer" style="display:none; color:#fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);">10.0s</div>
                     </button>
-                </div>
-
-                <div style="color: #6a4c9c; font-size: 10px; text-align: center; margin-bottom: 4px; font-weight: bold;">
-                    에너지 소모 배수를 선택하고 상단 영역을 터치해 드롭하세요!
-                </div>
-                <div class="multiplier-group">
-                    <button class="btn-mult active" data-mult="1">x1</button>
-                    <button class="btn-mult" data-mult="2">x2</button>
-                    <button class="btn-mult" data-mult="3">x3</button>
-                    <button class="btn-mult" data-mult="5">x5</button>
-                    <button class="btn-mult" data-mult="10" style="background:#fff59d; color:#d35400; box-shadow:0 3px 0 #f6c026;">x10</button>
                 </div>
             </div>
         </div>
@@ -223,9 +225,7 @@
             <div class="view-title">도감 - 전체 캐릭터 (12종)</div>
             <div class="view-content">
                 <div style="color: #8e7cc3; font-weight: bold; margin-bottom: 10px;">합성을 통해 모든 캐릭터를 수집해 보세요!</div>
-                <div class="char-grid" id="char-grid-container">
-                    <!-- 자바스크립트로 동적 생성 -->
-                </div>
+                <div class="char-grid" id="char-grid-container"></div>
             </div>
         </div>
 
@@ -241,7 +241,7 @@
         <div id="view-myroom" class="view-container">
             <div class="view-title">마이룸</div>
             <div class="view-content" style="display:flex; justify-content:center; align-items:center; height:100%;">
-                <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">🏠<br>마이룸 준비중입니다.</div>
+                <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">🛋️<br>마이룸 준비중입니다.</div>
             </div>
         </div>
 
@@ -252,7 +252,6 @@
                 <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">📖<br>앨범 준비중입니다.</div>
             </div>
         </div>
-
     </div>
 
     <!-- 하단 공통 네비게이션 바 -->
@@ -274,7 +273,6 @@
         </div>
     </div>
 
-    <!-- 공통 오버레이 -->
     <div id="overlay-gameover" class="overlay">
         <div style="font-size: 32px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">GAME OVER</div>
         <div style="font-size: 16px; margin-bottom: 10px;">데드라인을 초과했습니다!</div>
@@ -289,11 +287,9 @@
     let energy = 50; 
     let gold = 0;
     let multiplier = 1;
-    let energyCostBase = 1; 
-    let itemCost = 10; 
     let currentMenu = 'home';
 
-    const DEADLINE_Y = 70;
+    const DEADLINE_Y = 60; 
     let isGameOver = false;
     let isWarning = false;
     let warningTimeRemaining = 5.0;
@@ -304,11 +300,13 @@
 
     let isTiltActive = false;
     let tiltInterval = null;
-    let tiltTimeRemaining = 0;
-
     let isAutoDrop = false;
     let autoDropTimer = null;
     let isBattling = false;
+
+    // 배수 버튼 순환 로직 (x1 -> x2 -> x5 -> x10 -> x1)
+    const multList = [1, 2, 5, 10];
+    let multIndex = 0;
 
     const uiEnergy = document.getElementById('val-energy');
     const uiGold = document.getElementById('val-gold');
@@ -316,40 +314,51 @@
     const warningBanner = document.getElementById('warning-banner');
     const gyroDebug = document.getElementById('gyro-debug');
 
-    // 💡 12종 캐릭터 데이터 세팅 (256 사이즈 기준)
+    // 💡 구슬 크기 약 15% 축소 (12단계)
     const baseImgSize = 256;
     const LEVELS = [
-        { radius: 15, img: 'images/lv01.png' }, { radius: 22, img: 'images/lv02.png' },
-        { radius: 30, img: 'images/lv03.png' }, { radius: 40, img: 'images/lv04.png' },
-        { radius: 50, img: 'images/lv05.png' }, { radius: 62, img: 'images/lv06.png' },
-        { radius: 75, img: 'images/lv07.png' }, { radius: 90, img: 'images/lv08.png' },
-        { radius: 110, img: 'images/lv09.png' }, { radius: 130, img: 'images/lv10.png' },
-        { radius: 150, img: 'images/lv11.png' }, { radius: 175, img: 'images/lv12.png' }
+        { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
+        { radius: 25, img: 'images/lv03.png' }, { radius: 33, img: 'images/lv04.png' },
+        { radius: 42, img: 'images/lv05.png' }, { radius: 52, img: 'images/lv06.png' },
+        { radius: 62, img: 'images/lv07.png' }, { radius: 75, img: 'images/lv08.png' },
+        { radius: 90, img: 'images/lv09.png' }, { radius: 108, img: 'images/lv10.png' },
+        { radius: 125, img: 'images/lv11.png' }, { radius: 145, img: 'images/lv12.png' }
     ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
+    // 에너지 업데이트 UI 함수
+    function updateEnergyUI() {
+        uiEnergy.innerText = energy + " / 50";
+    }
+    updateEnergyUI(); // 초기 반영
 
-    // ================= [ 메뉴 전환 (SPA) 함수 ] =================
+    window.toggleMultiplier = function() {
+        multIndex = (multIndex + 1) % multList.length;
+        multiplier = multList[multIndex];
+        document.getElementById('mult-label').innerText = 'x' + multiplier;
+        
+        // 애니메이션 효과
+        const btn = document.getElementById('btn-mult');
+        btn.style.transform = 'translateY(4px)';
+        setTimeout(() => btn.style.transform = 'translateY(0)', 100);
+        
+        // 에너지 텍스트 반짝임
+        uiEnergy.parentElement.style.color = '#ff70a6'; 
+        setTimeout(() => uiEnergy.parentElement.style.color = '', 200);
+    }
+
     window.switchMenu = function(menuId) {
         currentMenu = menuId;
-
-        // 모든 뷰 숨김처리
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        // 클릭한 뷰 보이기
         document.getElementById('view-' + menuId).classList.add('active');
-
-        // 하단바 활성화 색상 변경
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-' + menuId).classList.add('active');
 
-        // 캐릭터 탭 진입 시 그리드 생성
-        if (menuId === 'character') {
-            renderCharacterGrid();
-        }
+        if (menuId === 'character') renderCharacterGrid();
     }
 
     function renderCharacterGrid() {
         const grid = document.getElementById('char-grid-container');
-        grid.innerHTML = ''; // 초기화
+        grid.innerHTML = ''; 
         LEVELS.forEach((lv, index) => {
             const item = document.createElement('div');
             item.className = 'char-item';
@@ -361,11 +370,9 @@
         });
     }
 
-    // ================= [ 공통 유틸리티 함수 ] =================
     function showFloatingText(text, x, y, color = '#fff') {
         const el = document.createElement('div'); el.className = 'floating-text'; el.innerHTML = text;
-        el.style.left = x + 'px'; el.style.top = y + 'px'; 
-        el.style.color = color;
+        el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
         document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
     }
 
@@ -382,11 +389,9 @@
 
         setTimeout(() => {
             heroEl.classList.add('attack');
-            
             setTimeout(() => {
                 heroEl.classList.remove('attack');
                 enemyEl.className = 'character enemy explode';
-                
                 if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
                 const rand = Math.floor(Math.random() * 12);
@@ -401,41 +406,44 @@
                     gold -= amount; if (gold < 0) gold = 0; 
                     rewardText = `-${amount} 💰`; rewardColor = "#ff7675"; 
                 } else if (rand < 8) { 
-                    energy += 15; rewardText = `+15 ⚡`; rewardColor = "#b9f6ca"; checkRecharge(); 
+                    energy += 15; if (energy > 50) energy = 50;
+                    rewardText = `+15 ⚡`; rewardColor = "#b9f6ca"; updateEnergyUI(); checkRecharge(); 
                 } else { 
                     rewardText = `처치! ⚔️`; rewardColor = "#fff"; 
                 }
                 
-                uiGold.innerText = gold; uiEnergy.innerText = energy;
-                showFloatingText(rewardText, rect.left - 20, rect.top, rewardColor);
-
+                uiGold.innerText = gold; updateEnergyUI();
+                showFloatingText(rewardText, rect.left - 20, rect.top + 20, rewardColor);
                 setTimeout(() => { enemyEl.className = 'character enemy'; isBattling = false; }, 400);
-
             }, 150); 
         }, 200); 
     }
 
     function checkRecharge() {
         const info = document.getElementById('recharge-info');
-        
-        if (energy <= 0 && !energyRechargeInterval) {
+        if (energy < 50 && !energyRechargeInterval) {
             info.style.display = 'block';
             energyTimeRemaining = 15;
-            info.innerText = `15초 후에 50 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+            info.innerText = `15s 이후 10에너지 충전 (${energyTimeRemaining}s)`;
             
             energyRechargeInterval = setInterval(() => {
                 energyTimeRemaining--;
                 if (energyTimeRemaining <= 0) {
-                    energy = 50; uiEnergy.innerText = energy;
-                    showFloatingText(`에너지 충전 완료 ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, '#1dd1a1');
+                    energy += 10;
+                    if (energy > 50) energy = 50;
+                    updateEnergyUI();
+                    showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
                     
-                    clearInterval(energyRechargeInterval); energyRechargeInterval = null;
-                    info.style.display = 'none';
+                    if (energy >= 50) {
+                        clearInterval(energyRechargeInterval); energyRechargeInterval = null; info.style.display = 'none';
+                    } else {
+                        energyTimeRemaining = 15; info.innerText = `15s 이후 10에너지 충전 (${energyTimeRemaining}s)`;
+                    }
                 } else {
-                    info.innerText = `15초 후에 50 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+                    info.innerText = `15s 이후 10에너지 충전 (${energyTimeRemaining}s)`;
                 }
             }, 1000);
-        } else if (energy > 0 && energyRechargeInterval) {
+        } else if (energy >= 50 && energyRechargeInterval) {
             clearInterval(energyRechargeInterval); energyRechargeInterval = null; info.style.display = 'none';
         }
     }
@@ -447,26 +455,17 @@
             return false; 
         }
         energy -= amount; if (energy < 0) energy = 0; 
-        uiEnergy.innerText = energy; checkRecharge(); return true;
+        updateEnergyUI(); checkRecharge(); return true;
     }
 
-    // ================= [ Matter.js 물리 엔진 및 게임 로직 ] =================
     window.onload = () => {
-        const btns = document.querySelectorAll('.btn-mult[data-mult]');
-        btns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                btns.forEach(b => b.classList.remove('active')); e.target.classList.add('active');
-                multiplier = parseInt(e.target.getAttribute('data-mult'));
-                uiEnergy.style.color = '#ff70a6'; setTimeout(() => uiEnergy.style.color = '#d81b60', 200);
-            });
-        });
-
         const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events;
         const gameSection = document.getElementById('game-section');
         const width = gameSection.clientWidth; const height = gameSection.clientHeight;
 
         const engine = Engine.create({ enableSleeping: false });
         const world = engine.world;
+        
         const render = Render.create({
             element: gameSection, engine: engine,
             options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
@@ -476,7 +475,6 @@
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
         Composite.add(world, [
-            // 바닥 좌표를 동적으로 잡힌 height 값에 맞춤
             Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions),
             Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
             Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
@@ -488,42 +486,34 @@
             gyroDebug.innerText = `X: ${Math.round(gamma)}, Y: ${Math.round(beta)}`;
 
             if (!isTiltActive && !isAutoDrop) return;
-            // 다른 메뉴를 볼 때는 센서가 화면을 흔들지 않도록 제어
             if (currentMenu !== 'home') return; 
             
             let adjustedBeta = beta - 45; 
             const maxForce = 3; const sensitivity = 30;
-
             let forceX = (gamma / sensitivity) * maxForce;
             let forceY = (adjustedBeta / sensitivity) * maxForce;
 
-            forceX = Math.max(-maxForce, Math.min(maxForce, forceX));
-            forceY = Math.max(-maxForce, Math.min(maxForce, forceY));
-
-            engine.gravity.x = forceX;
+            engine.gravity.x = Math.max(-maxForce, Math.min(maxForce, forceX));
             engine.gravity.y = Math.max(-maxForce, Math.min(maxForce, 1 + forceY)); 
         });
 
         window.activateTiltTimer = function() {
             isTiltActive = true;
             const tiltBtn = document.getElementById('btn-tilt');
-            const tiltLabel = document.getElementById('tilt-label');
-            const tiltTimer = document.getElementById('tilt-timer');
-            
-            tiltBtn.classList.add('active'); tiltLabel.style.display = 'none'; tiltTimer.style.display = 'block';
+            tiltBtn.classList.add('active'); document.getElementById('tilt-label').style.display = 'none'; document.getElementById('tilt-timer').style.display = 'block';
             showFloatingText(`기기를 기울이세요! 📱`, window.innerWidth/2 - 65, window.innerHeight/2);
             
-            tiltTimeRemaining = 10.0; tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's';
+            tiltTimeRemaining = 10.0; document.getElementById('tilt-timer').innerText = tiltTimeRemaining.toFixed(1) + 's';
 
             tiltInterval = setInterval(() => {
                 tiltTimeRemaining -= 0.1;
                 if (tiltTimeRemaining <= 0) {
                     clearInterval(tiltInterval); isTiltActive = false; 
                     if (!isAutoDrop) { engine.gravity.x = 0; engine.gravity.y = 1; }
-                    tiltBtn.classList.remove('active'); tiltLabel.style.display = 'block'; tiltTimer.style.display = 'none';
-                } else { tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's'; }
+                    tiltBtn.classList.remove('active'); document.getElementById('tilt-label').style.display = 'block'; document.getElementById('tilt-timer').style.display = 'none';
+                } else { document.getElementById('tilt-timer').innerText = tiltTimeRemaining.toFixed(1) + 's'; }
             }, 100);
-        };
+        }
 
         Events.on(engine, 'afterUpdate', () => {
             if (isGameOver) return;
@@ -544,31 +534,33 @@
 
         function triggerGameOver() {
             isGameOver = true; isWarning = false; warningBanner.style.display = 'none';
-            if(isAutoDrop) toggleAutoDrop(); 
-            overlayGameOver.style.display = 'flex';
+            if(isAutoDrop) toggleAutoDrop(); overlayGameOver.style.display = 'flex';
         }
 
         window.restartGame = function() {
             overlayGameOver.style.display = 'none';
             const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
-            
             isGameOver = false; isTiltActive = false; engine.gravity.x = 0; engine.gravity.y = 1;
             document.getElementById('btn-tilt').classList.remove('active'); document.getElementById('tilt-label').style.display = 'block'; document.getElementById('tilt-timer').style.display = 'none';
             
-            energy = 50; uiEnergy.innerText = energy; checkRecharge(); updatePreview();
+            energy = 50; updateEnergyUI(); checkRecharge(); updatePreview();
         };
 
         window.useItem = function(itemType) {
             if (isGameOver || currentMenu !== 'home') return;
             if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, window.innerHeight/2); return; }
-            if (!consumeEnergy(itemCost)) return; 
+            if (!consumeEnergy(10)) return; 
             
             const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
             
             if (itemType === 'hammer') {
                 if(allBalls.length > 0) {
                     const target = allBalls[Math.floor(Math.random() * allBalls.length)];
-                    Composite.remove(world, target); showFloatingText(`뿅망치 얍! 🔨`, target.position.x, target.position.y);
+                    // 💡 망치 파괴 보상 로직: (레벨 + 1) * 30 골드
+                    const reward = (target.level + 1) * 30;
+                    gold += reward; uiGold.innerText = gold;
+                    Composite.remove(world, target); 
+                    showFloatingText(`뿅망치! +${reward}💰`, target.position.x, target.position.y, '#f6e58d');
                 }
             } 
             else if (itemType === 'shake') {
@@ -583,8 +575,8 @@
                         .then(permissionState => {
                             if (permissionState === 'granted') { activateTiltTimer(); } 
                             else { 
-                                showFloatingText(`권한이 필요해요! 📱`, window.innerWidth/2 - 50, window.innerHeight/2, "#ff7675"); 
-                                energy += itemCost; uiEnergy.innerText = energy; checkRecharge(); gyroDebug.innerText = 'Gyro: 권한 거부됨';
+                                showFloatingText(`권한 필요! 📱`, window.innerWidth/2 - 40, window.innerHeight/2, "#ff7675"); 
+                                energy += 10; updateEnergyUI(); checkRecharge(); gyroDebug.innerText = 'Gyro: 거부됨';
                             }
                         }).catch(console.error);
                 } else { activateTiltTimer(); }
@@ -613,13 +605,14 @@
         function executeDrop(xPos) {
             if (!canDrop || isGameOver || currentMenu !== 'home') return;
             
-            const currentCost = energyCostBase * multiplier; 
+            const currentCost = 1 * multiplier; 
             if (!consumeEnergy(currentCost)) return;
 
             const levelData = LEVELS[nextDropLevel];
             const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
             
-            const body = Bodies.circle(startX, 60, levelData.radius, {
+            // 프리뷰 top 위치와 통일
+            const body = Bodies.circle(startX, 35, levelData.radius, {
                 restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
             });
             body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
@@ -629,10 +622,7 @@
             setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
         }
 
-        gameSection.addEventListener('pointerdown', (e) => { 
-            if (isAutoDrop || currentMenu !== 'home') return; 
-            const rect = gameSection.getBoundingClientRect(); executeDrop(e.clientX - rect.left); 
-        });
+        gameSection.addEventListener('pointerdown', (e) => { if (isAutoDrop || currentMenu !== 'home') return; const rect = gameSection.getBoundingClientRect(); executeDrop(e.clientX - rect.left); });
 
         window.toggleAutoDrop = function() {
             const runToggle = () => {
@@ -640,7 +630,6 @@
                 if (isAutoDrop) {
                     btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewImg.style.display = 'none'; dropLine.style.display = 'none';
                     autoDropTimer = setInterval(() => {
-                        // 홈 화면일 때만 자동 드롭
                         if (canDrop && !isGameOver && currentMenu === 'home') { executeDrop(Math.random() * width); }
                     }, 600);
                     showFloatingText(`오토 & 틸트 ON! 🤖📱`, window.innerWidth/2 - 70, window.innerHeight/2);
@@ -655,8 +644,7 @@
                     .then(permissionState => {
                         if (permissionState === 'granted') { runToggle(); } 
                         else { 
-                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); 
-                            gyroDebug.innerText = 'Gyro: 권한 거부됨';
+                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); gyroDebug.innerText = 'Gyro: 거부됨';
                         }
                     }).catch(console.error);
             } else { runToggle(); }
