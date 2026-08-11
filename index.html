@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>미소녀 수박게임 + 전투 머지 에디션</title>
+    <title>미소녀 수박게임 + 전투 머지 에디션 (메뉴 확장)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; touch-action: none; }
@@ -24,22 +24,31 @@
         @media (min-width: 421px) {
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
-        
-        #board-section {
-            flex: 2; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
-            display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 2px 10px;
-            z-index: 10;
+
+        /* 💡 뷰(View) 컨테이너: 메뉴 전환 시 화면을 바꿈 */
+        .view-container {
+            flex: 1; display: none; flex-direction: column; height: 100%; overflow: hidden;
         }
-        .board-header { font-weight: bold; color: #8e7cc3; margin-bottom: 4px; font-size: 13px;}
+        .view-container.active {
+            display: flex;
+        }
+        
+        /* ================= [ 홈(게임) 뷰 스타일 ] ================= */
+        /* 💡 전투 구역(상단) 높이 축소 */
+        #board-section {
+            flex-shrink: 0; height: 90px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
+            display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 5px 10px;
+        }
+        .board-header { font-weight: bold; color: #8e7cc3; margin-bottom: 4px; font-size: 11px;}
         
         #battle-stage {
-            width: 90%; height: 80px; 
+            width: 90%; height: 50px; 
             background-color: #f1e9fb;
             background-image: 
                 linear-gradient(90deg, rgba(255,255,255,0.7) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.7) 75%, transparent 75%, transparent),
-                linear-gradient(to top, #b9a0e6 0%, #b9a0e6 15px, transparent 15px);
-            background-size: 60px 100%, 100% 100%;
-            border: 2px solid #b9a0e6; border-radius: 12px;
+                linear-gradient(to top, #b9a0e6 0%, #b9a0e6 10px, transparent 10px);
+            background-size: 40px 100%, 100% 100%;
+            border: 2px solid #b9a0e6; border-radius: 8px;
             position: relative; overflow: hidden;
             box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
             animation: scrollBg 1.2s linear infinite;
@@ -47,92 +56,72 @@
         
         @keyframes scrollBg {
             from { background-position: 0 0, 0 0; }
-            to { background-position: -60px 0, 0 0; }
+            to { background-position: -40px 0, 0 0; }
         }
 
-        .character { position: absolute; font-size: 40px; top: 12px; transition: all 0.2s ease-out; }
+        .character { position: absolute; font-size: 28px; top: 8px; transition: all 0.2s ease-out; }
         
-        .hero { 
-            left: 40%; margin-left: -20px; 
-            transform: scaleX(-1); 
-            filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2)); 
-        }
-        .hero.attack { transform: scaleX(-1) translateX(-40px) rotate(-20deg) scale(1.2); }
+        .hero { left: 40%; margin-left: -14px; transform: scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .hero.attack { transform: scaleX(-1) translateX(-30px) rotate(-20deg) scale(1.2); }
         
-        .enemy { 
-            right: -60px; 
-            opacity: 0; 
-            filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2)); 
-        }
-        .enemy.slide-in {
-            right: 15%; 
-            opacity: 1; 
-        }
-        .enemy.explode { 
-            right: 15%;
-            animation: explodeAnim 0.4s forwards ease-out; 
-        }
+        .enemy { right: -50px; opacity: 0; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .enemy.slide-in { right: 15%; opacity: 1; }
+        .enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
         
         @keyframes explodeAnim { 
             0% { transform: scale(1); opacity: 1; filter: brightness(1); } 
-            50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 15px #ff4757); } 
+            50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 10px #ff4757); } 
             100% { transform: scale(2) rotate(15deg); opacity: 0; filter: blur(4px); } 
         }
 
         #game-section {
-            flex: 5.5; background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(220, 240, 255, 0.6));
+            flex: 1; background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(220, 240, 255, 0.6));
             position: relative; overflow: hidden; cursor: crosshair;
         }
+        #game-section canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        /* 💡 캔버스를 절대 위치로 고정하여 레이아웃 변형 및 구슬 가려짐 현상 완벽 방지 */
-        #game-section canvas { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-        }
-        
-        /* 미리보기 구슬 (잘리지 않도록 높이 60px 유지) */
+        /* 데드라인 및 프리뷰 위치 조정 */
         #preview-ball {
-            position: absolute; top: 60px; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 6; opacity: 0.8; display: none;
+            position: absolute; top: 40px; left: 50%; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 20; opacity: 0.9; display: none;
         }
-
         #drop-line {
             position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
             background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6;
             pointer-events: none; display: none; z-index: 5; transform: translateX(-50%);
         }
-
         #deadline-line {
-            position: absolute; top: 90px; left: 0; right: 0; height: 2px;
+            position: absolute; top: 60px; left: 0; right: 0; height: 2px;
             background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6;
             z-index: 4; pointer-events: none;
         }
         #warning-banner {
-            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
-            background: #ff477e; color: white; padding: 6px 16px; border-radius: 20px;
-            font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4);
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4);
             display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
         }
-        @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.05); } }
 
+        /* 게임 하단 UI (위로 올라옴) */
         #ui-section {
-            flex: 2.5; background: #ffb3c6; padding: 10px 15px; display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid #b9a0e6; z-index: 10;
+            flex-shrink: 0; background: #ffb3c6; padding: 10px 15px; border-top: 4px solid #b9a0e6; z-index: 10;
         }
-        .stats-bar { display: flex; justify-content: space-between; align-items: flex-start; color: #4a4e69; font-weight: bold; font-size: 16px; margin-bottom: 6px; }
-        .stat-box { background: rgba(255,255,255,0.6); padding: 6px 12px; border-radius: 10px; display: flex; align-items: center; }
-        .stat-box span { color: #d81b60; margin-right: 8px; }
+        .stats-bar { display: flex; justify-content: space-between; align-items: flex-start; color: #4a4e69; font-weight: bold; font-size: 15px; margin-bottom: 6px; }
+        .stat-box { background: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 10px; display: flex; align-items: center; }
+        .stat-box span { color: #d81b60; margin-right: 6px; }
         
         #recharge-info {
-            font-size: 11px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+            font-size: 10px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
             margin-top: 4px; display: none; text-align: left; padding-left: 4px;
         }
         
-        .item-group { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+        .item-group { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
         .btn-item {
-            flex: 1; padding: 6px 0; border: 2px solid #fff; border-radius: 12px; font-size: 11px; font-weight: bold; color: white;
-            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.1s; text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            flex: 1; padding: 4px 0; border: 2px solid #fff; border-radius: 10px; font-size: 10px; font-weight: bold; color: white;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
         }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
-        .btn-item span { font-size: 16px; margin-bottom: 2px; display: block; text-shadow: none; }
+        .btn-item span { font-size: 14px; margin-bottom: 2px; display: block; text-shadow: none; }
         
         .btn-auto { background: #b3e5fc; box-shadow: 0 4px 0 #4fc3f7; color: #0277bd; text-shadow: none; }
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; transform: translateY(4px); text-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
@@ -141,16 +130,56 @@
         .btn-tilt { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
         .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); }
 
-        .multiplier-group { display: flex; justify-content: space-between; gap: 6px; }
+        .multiplier-group { display: flex; justify-content: space-between; gap: 4px; }
         .btn-mult {
-            flex: 1; padding: 8px 0; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; color: #8e7cc3;
-            background: #fff; cursor: pointer; box-shadow: 0 4px 0 #d1c4e9; transition: all 0.1s;
+            flex: 1; padding: 6px 0; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; color: #8e7cc3;
+            background: #fff; cursor: pointer; box-shadow: 0 3px 0 #d1c4e9; transition: all 0.1s;
         }
-        .btn-mult:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        .btn-mult.active { background: #b9a0e6; color: white; box-shadow: 0 4px 0 #9575cd; }
+        .btn-mult:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+        .btn-mult.active { background: #b9a0e6; color: white; box-shadow: 0 3px 0 #9575cd; }
 
+
+        /* ================= [ 다른 뷰 스타일 (캐릭터, 상점 등) ] ================= */
+        .generic-view {
+            flex: 1; background: #fdfbf7; display: flex; flex-direction: column; overflow-y: auto; touch-action: auto;
+        }
+        .view-title {
+            background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0;
+        }
+        .view-content { padding: 20px; text-align: center; flex: 1; }
+
+        /* 캐릭터 그리드 */
+        .char-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px;
+        }
+        .char-item {
+            background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px;
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5;
+        }
+        .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
+        .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
+
+
+        /* ================= [ 공통 하단 네비게이션 바 ] ================= */
+        #bottom-nav {
+            flex-shrink: 0; height: 65px; background: #fff; border-top: 2px solid #e8dff5;
+            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex: 1; height: 100%; color: #b2bec3; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .nav-item .icon { font-size: 22px; margin-bottom: 3px; transition: transform 0.2s; filter: grayscale(1); opacity: 0.6; }
+        .nav-item.active { color: #d81b60; }
+        .nav-item.active .icon { transform: translateY(-3px) scale(1.1); filter: grayscale(0); opacity: 1; }
+
+
+        /* 공통 플로팅 및 오버레이 */
         .floating-text {
-            position: absolute; font-weight: bold; font-size: 20px; color: #fff; text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69;
+            position: absolute; font-weight: bold; font-size: 20px; color: #fff; 
+            text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69;
             pointer-events: none; z-index: 100; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center;
         }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
@@ -163,80 +192,139 @@
             margin-top:20px; padding: 12px 24px; font-size:16px; border-radius:12px; border:2px solid #fff; background:#ffb3c6; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 0 #f78fb3; transition: all 0.1s;
         }
         .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        
-        #gyro-debug { position: absolute; bottom: 5px; left: 10px; font-size: 11px; color: #b9a0e6; z-index: 999; font-weight: bold; }
+        #gyro-debug { position: absolute; bottom: 70px; left: 10px; font-size: 11px; color: #b9a0e6; z-index: 999; font-weight: bold; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="board-section">
-        <div class="board-header">⚔️ 구슬을 합성해 몬스터를 처치하세요!</div>
-        <div id="battle-stage">
-            <div id="hero" class="character hero">🤺</div>
-            <div id="enemy" class="character enemy">🦇</div>
-        </div>
-    </div>
 
-    <div id="game-section">
-        <div id="deadline-line"></div>
-        <div id="warning-banner">⚠️ 위험! 5.0초</div>
-        <div id="drop-line"></div>
-        <img id="preview-ball" src="" alt="preview">
-    </div>
-
-    <div id="ui-section">
-        <div class="stats-bar">
-            <div style="display:flex; flex-direction:column;">
-                <div class="stat-box"><span>⚡에너지</span> <div id="val-energy">50</div></div>
-                <!-- 💡 오해를 막기 위해 초기 HTML 텍스트도 완벽하게 50 에너지로 세팅 -->
-                <div id="recharge-info">15초 후에 50 에너지가 충전 됩니다. (15s)</div>
+    <!-- ================= [ 뷰 1: 홈 (메인 게임) ] ================= -->
+    <div id="view-home" class="view-container active">
+        <div id="board-section">
+            <div class="board-header">⚔️ 구슬을 합성해 몬스터를 처치하세요!</div>
+            <div id="battle-stage">
+                <div id="hero" class="character hero">🤺</div>
+                <div id="enemy" class="character enemy">🦇</div>
             </div>
-            <div class="stat-box" style="align-self: flex-start;"><span>💰골드</span> <div id="val-gold">0</div></div>
-        </div>
-        
-        <div class="item-group">
-            <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
-                <span>🤖</span><div id="auto-label">오토: OFF</div>
-            </button>
-            <button class="btn-item btn-hammer" onclick="useItem('hammer')"><span>🔨</span>뿅망치</button>
-            <button class="btn-item btn-shake" onclick="useItem('shake')"><span>🌪️</span>쉐이크</button>
-            <button class="btn-item btn-tilt" id="btn-tilt" onclick="useItem('tilt')">
-                <span>📱</span>
-                <div id="tilt-label">자이로 틸트</div>
-                <div id="tilt-timer" style="display:none; color:#fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);">10.0s</div>
-            </button>
         </div>
 
-        <div style="color: #6a4c9c; font-size: 11px; text-align: center; margin-bottom: 6px; font-weight: bold;">
-            에너지 소모 배수를 선택하고 상단 영역을 터치해 드롭하세요!
+        <div id="game-section">
+            <div id="deadline-line"></div>
+            <div id="warning-banner">⚠️ 위험! 5.0초</div>
+            <div id="drop-line"></div>
+            <img id="preview-ball" src="" alt="preview">
         </div>
-        <div class="multiplier-group">
-            <button class="btn-mult active" data-mult="1">x1</button>
-            <button class="btn-mult" data-mult="2">x2</button>
-            <button class="btn-mult" data-mult="3">x3</button>
-            <button class="btn-mult" data-mult="5">x5</button>
-            <button class="btn-mult" data-mult="10" style="background:#fff59d; color:#d35400; box-shadow:0 4px 0 #f6c026;">x10</button>
+
+        <div id="ui-section">
+            <div class="stats-bar">
+                <div style="display:flex; flex-direction:column;">
+                    <div class="stat-box"><span>⚡에너지</span> <div id="val-energy">50</div></div>
+                    <div id="recharge-info">15초 후에 50 에너지가 충전 됩니다. (15s)</div>
+                </div>
+                <div class="stat-box" style="align-self: flex-start;"><span>💰골드</span> <div id="val-gold">0</div></div>
+            </div>
+            
+            <div class="item-group">
+                <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
+                    <span>🤖</span><div id="auto-label">오토: OFF</div>
+                </button>
+                <button class="btn-item btn-hammer" onclick="useItem('hammer')"><span>🔨</span>뿅망치</button>
+                <button class="btn-item btn-shake" onclick="useItem('shake')"><span>🌪️</span>쉐이크</button>
+                <button class="btn-item btn-tilt" id="btn-tilt" onclick="useItem('tilt')">
+                    <span>📱</span>
+                    <div id="tilt-label">자이로 틸트</div>
+                    <div id="tilt-timer" style="display:none; color:#fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);">10.0s</div>
+                </button>
+            </div>
+
+            <div style="color: #6a4c9c; font-size: 10px; text-align: center; margin-bottom: 4px; font-weight: bold;">
+                에너지 소모 배수를 선택하고 상단 영역을 터치해 드롭하세요!
+            </div>
+            <div class="multiplier-group">
+                <button class="btn-mult active" data-mult="1">x1</button>
+                <button class="btn-mult" data-mult="2">x2</button>
+                <button class="btn-mult" data-mult="3">x3</button>
+                <button class="btn-mult" data-mult="5">x5</button>
+                <button class="btn-mult" data-mult="10" style="background:#fff59d; color:#d35400; box-shadow:0 3px 0 #f6c026;">x10</button>
+            </div>
         </div>
     </div>
 
+    <!-- ================= [ 뷰 2: 캐릭터 도감 ] ================= -->
+    <div id="view-character" class="view-container generic-view">
+        <div class="view-title">도감 - 전체 캐릭터 (12종)</div>
+        <div class="view-content">
+            <div style="color: #8e7cc3; font-weight: bold; margin-bottom: 10px;">합성을 통해 모든 캐릭터를 수집해 보세요!</div>
+            <div class="char-grid" id="char-grid-container">
+                <!-- JS에서 동적 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= [ 뷰 3: 상점 (준비중) ] ================= -->
+    <div id="view-shop" class="view-container generic-view">
+        <div class="view-title">상점</div>
+        <div class="view-content" style="display:flex; justify-content:center; align-items:center; height:100%;">
+            <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">🛒<br>상점 준비중입니다.</div>
+        </div>
+    </div>
+
+    <!-- ================= [ 뷰 4: 마이룸 (준비중) ] ================= -->
+    <div id="view-myroom" class="view-container generic-view">
+        <div class="view-title">마이룸</div>
+        <div class="view-content" style="display:flex; justify-content:center; align-items:center; height:100%;">
+            <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">🏠<br>마이룸 준비중입니다.</div>
+        </div>
+    </div>
+
+    <!-- ================= [ 뷰 5: 앨범 (준비중) ] ================= -->
+    <div id="view-album" class="view-container generic-view">
+        <div class="view-title">앨범</div>
+        <div class="view-content" style="display:flex; justify-content:center; align-items:center; height:100%;">
+            <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">📖<br>앨범 준비중입니다.</div>
+        </div>
+    </div>
+
+    <!-- ================= [ 하단 공통 네비게이션 바 ] ================= -->
+    <div id="bottom-nav">
+        <div class="nav-item" id="nav-shop" onclick="switchMenu('shop')">
+            <div class="icon">🛒</div><div>상점</div>
+        </div>
+        <div class="nav-item" id="nav-character" onclick="switchMenu('character')">
+            <div class="icon">🐾</div><div>캐릭터</div>
+        </div>
+        <div class="nav-item active" id="nav-home" onclick="switchMenu('home')">
+            <div class="icon">🏠</div><div>홈</div>
+        </div>
+        <div class="nav-item" id="nav-myroom" onclick="switchMenu('myroom')">
+            <div class="icon">🛋️</div><div>마이룸</div>
+        </div>
+        <div class="nav-item" id="nav-album" onclick="switchMenu('album')">
+            <div class="icon">📖</div><div>앨범</div>
+        </div>
+    </div>
+
+    <!-- 게임 오버 오버레이 -->
     <div id="overlay-gameover" class="overlay">
         <div style="font-size: 32px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">GAME OVER</div>
         <div style="font-size: 16px; margin-bottom: 10px;">데드라인을 초과했습니다!</div>
         <button class="action-btn" onclick="restartGame()">다시 시작</button>
     </div>
     
-    <div id="gyro-debug">Gyro: 센서 대기중...</div>
+    <div id="gyro-debug">Gyro: 대기중</div>
 </div>
 
 <script>
+    // 상태 공유 변수
     let energy = 50; 
     let gold = 0;
     let multiplier = 1;
     let energyCostBase = 1; 
     let itemCost = 10; 
+    let currentMenu = 'home';
 
-    const DEADLINE_Y = 90;
+    const DEADLINE_Y = 60; // 축소된 상단 비율에 맞게 재조정
     let isGameOver = false;
     let isWarning = false;
     let warningTimeRemaining = 5.0;
@@ -251,7 +339,6 @@
 
     let isAutoDrop = false;
     let autoDropTimer = null;
-
     let isBattling = false;
 
     const uiEnergy = document.getElementById('val-energy');
@@ -260,15 +347,52 @@
     const warningBanner = document.getElementById('warning-banner');
     const gyroDebug = document.getElementById('gyro-debug');
 
+    // 💡 12단계로 구슬 데이터 확장 (lv11, lv12 추가)
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 15, img: 'images/lv01.png' }, { radius: 22, img: 'images/lv02.png' },
         { radius: 30, img: 'images/lv03.png' }, { radius: 40, img: 'images/lv04.png' },
         { radius: 50, img: 'images/lv05.png' }, { radius: 62, img: 'images/lv06.png' },
         { radius: 75, img: 'images/lv07.png' }, { radius: 90, img: 'images/lv08.png' },
-        { radius: 110, img: 'images/lv09.png' }, { radius: 130, img: 'images/lv10.png' } 
+        { radius: 110, img: 'images/lv09.png' }, { radius: 130, img: 'images/lv10.png' },
+        { radius: 150, img: 'images/lv11.png' }, { radius: 175, img: 'images/lv12.png' } // 추가된 2종
     ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
+    // ================= [ 네비게이션 로직 ] =================
+    function switchMenu(menuId) {
+        currentMenu = menuId;
+
+        // 모든 뷰 숨기기 & 선택된 뷰 보이기
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-' + menuId).classList.add('active');
+
+        // 하단 탭 아이콘 활성화
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('nav-' + menuId).classList.add('active');
+
+        // 캐릭터 도감 메뉴 진입 시 그리드 렌더링
+        if (menuId === 'character') {
+            renderCharacterGrid();
+        }
+    }
+
+    function renderCharacterGrid() {
+        const grid = document.getElementById('char-grid-container');
+        grid.innerHTML = '';
+        LEVELS.forEach((lv, index) => {
+            const item = document.createElement('div');
+            item.className = 'char-item';
+            // 도감 내 이미지가 너무 크지 않도록 style 제한
+            item.innerHTML = `
+                <img src="${lv.img}" alt="Lv${index+1}" style="width: 50px; height: 50px; object-fit: contain; margin-bottom: 5px;">
+                <div class="char-lv">Lv.${index + 1}</div>
+            `;
+            grid.appendChild(item);
+        });
+    }
+
+
+    // ================= [ 전투 및 메인 게임 로직 ] =================
     const enemies = ['🦇', '🦹‍♂️', '👾', '🧛', '🧟', '🐉', '🐲'];
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
@@ -298,8 +422,7 @@
                 if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
                 const rand = Math.floor(Math.random() * 12);
-                let rewardText = "";
-                let rewardColor = "#fff";
+                let rewardText = ""; let rewardColor = "#fff";
                 const rect = enemyEl.getBoundingClientRect();
 
                 if (rand < 4) { 
@@ -315,14 +438,10 @@
                     rewardText = `처치! ⚔️`; rewardColor = "#fff"; 
                 }
                 
-                uiGold.innerText = gold;
-                uiEnergy.innerText = energy;
+                uiGold.innerText = gold; uiEnergy.innerText = energy;
                 showFloatingText(rewardText, rect.left - 20, rect.top, rewardColor);
 
-                setTimeout(() => {
-                    enemyEl.className = 'character enemy'; 
-                    isBattling = false; 
-                }, 400);
+                setTimeout(() => { enemyEl.className = 'character enemy'; isBattling = false; }, 400);
 
             }, 150); 
         }, 200); 
@@ -341,6 +460,7 @@
                 if (energyTimeRemaining <= 0) {
                     energy = 50;
                     uiEnergy.innerText = energy;
+                    // 다른 메뉴에 있어도 알 수 있게 위치 중앙 근처 고정
                     showFloatingText(`에너지 충전 완료 ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, '#1dd1a1');
                     
                     clearInterval(energyRechargeInterval);
@@ -365,10 +485,7 @@
         }
         energy -= amount;
         if (energy < 0) energy = 0; 
-        
-        uiEnergy.innerText = energy; 
-        checkRecharge();
-        return true;
+        uiEnergy.innerText = energy; checkRecharge(); return true;
     }
 
     const btns = document.querySelectorAll('.btn-mult[data-mult]');
@@ -381,233 +498,231 @@
     });
 
     const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events;
-    const gameSection = document.getElementById('game-section');
-    const width = gameSection.clientWidth; const height = gameSection.clientHeight;
-
-    const engine = Engine.create({ enableSleeping: false });
-    const world = engine.world;
     
-    // 물리 엔진 렌더러 설정
-    const render = Render.create({
-        element: gameSection, engine: engine,
-        options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
-    });
+    // Matter.js를 안전하게 초기화하기 위해 약간의 딜레이 또는 onload 이후 실행 보장
+    window.onload = () => {
+        const gameSection = document.getElementById('game-section');
+        const width = gameSection.clientWidth; 
+        const height = gameSection.clientHeight;
 
-    Render.run(render); Runner.run(Runner.create(), engine);
-
-    // 💡 바닥 좌표 롤백 (height + 25): 이제 공중에 뜨거나 가려지는 현상 없이 UI 핑크선 위에 정확히 안착합니다.
-    const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
-    Composite.add(world, [
-        Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions),
-        Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
-        Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
-        Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions)
-    ]);
-
-    window.addEventListener('deviceorientation', (event) => {
-        let gamma = event.gamma || 0; let beta = event.beta || 0;
-        gyroDebug.innerText = `X: ${Math.round(gamma)}, Y: ${Math.round(beta)}`;
-
-        if (!isTiltActive && !isAutoDrop) return;
+        const engine = Engine.create({ enableSleeping: false });
+        const world = engine.world;
         
-        let adjustedBeta = beta - 45; 
-        const maxForce = 3; const sensitivity = 30;
-
-        let forceX = (gamma / sensitivity) * maxForce;
-        let forceY = (adjustedBeta / sensitivity) * maxForce;
-
-        forceX = Math.max(-maxForce, Math.min(maxForce, forceX));
-        forceY = Math.max(-maxForce, Math.min(maxForce, forceY));
-
-        engine.gravity.x = forceX;
-        engine.gravity.y = Math.max(-maxForce, Math.min(maxForce, 1 + forceY)); 
-    });
-
-    function activateTiltTimer() {
-        isTiltActive = true;
-        const tiltBtn = document.getElementById('btn-tilt');
-        const tiltLabel = document.getElementById('tilt-label');
-        const tiltTimer = document.getElementById('tilt-timer');
-        
-        tiltBtn.classList.add('active'); tiltLabel.style.display = 'none'; tiltTimer.style.display = 'block';
-        showFloatingText(`기기를 기울이세요! 📱`, window.innerWidth/2 - 65, height/2);
-        
-        tiltTimeRemaining = 10.0; tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's';
-
-        tiltInterval = setInterval(() => {
-            tiltTimeRemaining -= 0.1;
-            if (tiltTimeRemaining <= 0) {
-                clearInterval(tiltInterval); isTiltActive = false; 
-                if (!isAutoDrop) { engine.gravity.x = 0; engine.gravity.y = 1; }
-                tiltBtn.classList.remove('active'); tiltLabel.style.display = 'block'; tiltTimer.style.display = 'none';
-            } else { tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's'; }
-        }, 100);
-    }
-
-    Events.on(engine, 'afterUpdate', () => {
-        if (isGameOver) return;
-        const bodies = Composite.allBodies(world).filter(b => b.level !== undefined && !b.isStatic);
-        let isOverflow = false; const now = Date.now();
-        for (let b of bodies) {
-            if (now - b.spawnTime > 1000 && b.position.y - LEVELS[b.level].radius <= DEADLINE_Y && Math.abs(b.velocity.y) < 0.3) { isOverflow = true; break; }
-        }
-
-        if (isOverflow && !isWarning) {
-            isWarning = true; warningTimeRemaining = 5.0; warningBanner.style.display = 'block';
-            warningInterval = setInterval(() => {
-                warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
-                if (warningTimeRemaining <= 0) { clearInterval(warningInterval); triggerGameOver(); }
-            }, 100);
-        } else if (!isOverflow && isWarning) { isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; }
-    });
-
-    function triggerGameOver() {
-        isGameOver = true; isWarning = false; warningBanner.style.display = 'none';
-        if(isAutoDrop) toggleAutoDrop(); 
-        overlayGameOver.style.display = 'flex';
-    }
-
-    window.restartGame = function() {
-        overlayGameOver.style.display = 'none';
-        const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
-        
-        isGameOver = false; isTiltActive = false; engine.gravity.x = 0; engine.gravity.y = 1;
-        document.getElementById('btn-tilt').classList.remove('active'); document.getElementById('tilt-label').style.display = 'block'; document.getElementById('tilt-timer').style.display = 'none';
-        
-        energy = 50; uiEnergy.innerText = energy; checkRecharge(); updatePreview();
-    }
-
-    window.useItem = function(itemType) {
-        if (isGameOver) return;
-        if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, height/2); return; }
-        if (!consumeEnergy(itemCost)) return; 
-        
-        const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
-        
-        if (itemType === 'hammer') {
-            if(allBalls.length > 0) {
-                const target = allBalls[Math.floor(Math.random() * allBalls.length)];
-                Composite.remove(world, target); showFloatingText(`뿅망치 얍! 🔨`, target.position.x, target.position.y);
-            }
-        } 
-        else if (itemType === 'shake') {
-            allBalls.forEach(b => {
-                const force = 0.12 * b.mass; Matter.Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * force, y: -force * 1.8 });
-            });
-            showFloatingText(`쉐이크 🌪️`, window.innerWidth/2 - 30, height/2);
-        } 
-        else if (itemType === 'tilt') {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') { activateTiltTimer(); } 
-                        else { 
-                            showFloatingText(`권한이 필요해요! 📱`, window.innerWidth/2 - 50, height/2, "#ff7675"); 
-                            energy += itemCost; uiEnergy.innerText = energy; checkRecharge();
-                            gyroDebug.innerText = 'Gyro: 권한 거부됨';
-                        }
-                    }).catch(console.error);
-            } else {
-                activateTiltTimer();
-            }
-        }
-    };
-
-    const dropLine = document.getElementById('drop-line');
-    const previewImg = document.getElementById('preview-ball');
-    let nextDropLevel = Math.floor(Math.random() * 2);
-    let canDrop = true;
-
-    function updatePreview() {
-        const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
-        if (!isAutoDrop) previewImg.style.display = 'block';
-    }
-    updatePreview();
-
-    gameSection.addEventListener('pointermove', (e) => {
-        if(isGameOver || isAutoDrop || !canDrop) return;
-        const rect = gameSection.getBoundingClientRect();
-        let xPos = e.clientX - rect.left;
-        
-        dropLine.style.display = 'block'; dropLine.style.left = xPos + 'px'; previewImg.style.left = xPos + 'px';
-    });
-    gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; previewImg.style.left = '50%'; });
-
-    function executeDrop(xPos) {
-        if (!canDrop || isGameOver) return;
-        
-        const currentCost = energyCostBase * multiplier; 
-        if (!consumeEnergy(currentCost)) return;
-
-        const levelData = LEVELS[nextDropLevel];
-        const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
-        
-        // 💡 물리 구슬 생성 위치를 top: 60px로 여유롭게 하향 조정 (천장 잘림 방지)
-        const body = Bodies.circle(startX, 60, levelData.radius, {
-            restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
+        const render = Render.create({
+            element: gameSection, engine: engine,
+            options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
         });
-        body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
-        Composite.add(world, body);
 
-        canDrop = false; previewImg.style.display = 'none'; dropLine.style.display = 'none';
-        
-        setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
-    }
+        Render.run(render); Runner.run(Runner.create(), engine);
 
-    gameSection.addEventListener('pointerdown', (e) => { 
-        if (isAutoDrop) return; 
-        const rect = gameSection.getBoundingClientRect();
-        executeDrop(e.clientX - rect.left); 
-    });
+        const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
+        Composite.add(world, [
+            // 바닥 위치를 실제 height에 딱 맞게 세팅
+            Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions),
+            Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
+            Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
+            Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions)
+        ]);
 
-    window.toggleAutoDrop = function() {
-        const runToggle = () => {
-            isAutoDrop = !isAutoDrop; const btnAuto = document.getElementById('btn-auto');
-            if (isAutoDrop) {
-                btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewImg.style.display = 'none'; dropLine.style.display = 'none';
-                autoDropTimer = setInterval(() => {
-                    if (canDrop && !isGameOver) { executeDrop(Math.random() * width); }
-                }, 600);
-                showFloatingText(`오토 & 틸트 ON! 🤖📱`, window.innerWidth/2 - 70, height/2);
-            } else {
-                btnAuto.classList.remove('active'); document.getElementById('auto-label').innerText = '오토: OFF'; clearInterval(autoDropTimer); updatePreview();
-                if (!isTiltActive) { engine.gravity.x = 0; engine.gravity.y = 1; }
+        window.addEventListener('deviceorientation', (event) => {
+            let gamma = event.gamma || 0; let beta = event.beta || 0;
+            gyroDebug.innerText = `X: ${Math.round(gamma)}, Y: ${Math.round(beta)}`;
+
+            if (!isTiltActive && !isAutoDrop) return;
+            
+            let adjustedBeta = beta - 45; 
+            const maxForce = 3; const sensitivity = 30;
+
+            let forceX = (gamma / sensitivity) * maxForce;
+            let forceY = (adjustedBeta / sensitivity) * maxForce;
+
+            forceX = Math.max(-maxForce, Math.min(maxForce, forceX));
+            forceY = Math.max(-maxForce, Math.min(maxForce, forceY));
+
+            engine.gravity.x = forceX;
+            engine.gravity.y = Math.max(-maxForce, Math.min(maxForce, 1 + forceY)); 
+        });
+
+        window.activateTiltTimer = function() {
+            isTiltActive = true;
+            const tiltBtn = document.getElementById('btn-tilt');
+            const tiltLabel = document.getElementById('tilt-label');
+            const tiltTimer = document.getElementById('tilt-timer');
+            
+            tiltBtn.classList.add('active'); tiltLabel.style.display = 'none'; tiltTimer.style.display = 'block';
+            showFloatingText(`기기를 기울이세요! 📱`, window.innerWidth/2 - 65, window.innerHeight/2);
+            
+            tiltTimeRemaining = 10.0; tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's';
+
+            tiltInterval = setInterval(() => {
+                tiltTimeRemaining -= 0.1;
+                if (tiltTimeRemaining <= 0) {
+                    clearInterval(tiltInterval); isTiltActive = false; 
+                    if (!isAutoDrop) { engine.gravity.x = 0; engine.gravity.y = 1; }
+                    tiltBtn.classList.remove('active'); tiltLabel.style.display = 'block'; tiltTimer.style.display = 'none';
+                } else { tiltTimer.innerText = tiltTimeRemaining.toFixed(1) + 's'; }
+            }, 100);
+        }
+
+        Events.on(engine, 'afterUpdate', () => {
+            if (isGameOver) return;
+            const bodies = Composite.allBodies(world).filter(b => b.level !== undefined && !b.isStatic);
+            let isOverflow = false; const now = Date.now();
+            for (let b of bodies) {
+                if (now - b.spawnTime > 1000 && b.position.y - LEVELS[b.level].radius <= DEADLINE_Y && Math.abs(b.velocity.y) < 0.3) { isOverflow = true; break; }
+            }
+
+            if (isOverflow && !isWarning) {
+                isWarning = true; warningTimeRemaining = 5.0; warningBanner.style.display = 'block';
+                warningInterval = setInterval(() => {
+                    warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
+                    if (warningTimeRemaining <= 0) { clearInterval(warningInterval); triggerGameOver(); }
+                }, 100);
+            } else if (!isOverflow && isWarning) { isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; }
+        });
+
+        function triggerGameOver() {
+            isGameOver = true; isWarning = false; warningBanner.style.display = 'none';
+            if(isAutoDrop) toggleAutoDrop(); 
+            overlayGameOver.style.display = 'flex';
+        }
+
+        window.restartGame = function() {
+            overlayGameOver.style.display = 'none';
+            const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
+            
+            isGameOver = false; isTiltActive = false; engine.gravity.x = 0; engine.gravity.y = 1;
+            document.getElementById('btn-tilt').classList.remove('active'); document.getElementById('tilt-label').style.display = 'block'; document.getElementById('tilt-timer').style.display = 'none';
+            
+            energy = 50; uiEnergy.innerText = energy; checkRecharge(); updatePreview();
+        }
+
+        window.useItem = function(itemType) {
+            if (isGameOver) return;
+            if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, window.innerHeight/2); return; }
+            if (!consumeEnergy(itemCost)) return; 
+            
+            const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
+            
+            if (itemType === 'hammer') {
+                if(allBalls.length > 0) {
+                    const target = allBalls[Math.floor(Math.random() * allBalls.length)];
+                    Composite.remove(world, target); showFloatingText(`뿅망치 얍! 🔨`, target.position.x, target.position.y);
+                }
+            } 
+            else if (itemType === 'shake') {
+                allBalls.forEach(b => {
+                    const force = 0.12 * b.mass; Matter.Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * force, y: -force * 1.8 });
+                });
+                showFloatingText(`쉐이크 🌪️`, window.innerWidth/2 - 30, window.innerHeight/2);
+            } 
+            else if (itemType === 'tilt') {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') { activateTiltTimer(); } 
+                            else { 
+                                showFloatingText(`권한이 필요해요! 📱`, window.innerWidth/2 - 50, window.innerHeight/2, "#ff7675"); 
+                                energy += itemCost; uiEnergy.innerText = energy; checkRecharge();
+                                gyroDebug.innerText = 'Gyro: 권한 거부됨';
+                            }
+                        }).catch(console.error);
+                } else {
+                    activateTiltTimer();
+                }
             }
         };
 
-        if (!isAutoDrop && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    if (permissionState === 'granted') { runToggle(); } 
-                    else { 
-                        showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, height/2, "#ff7675"); 
-                        gyroDebug.innerText = 'Gyro: 권한 거부됨';
-                    }
-                }).catch(console.error);
-        } else { runToggle(); }
-    }
+        const dropLine = document.getElementById('drop-line');
+        const previewImg = document.getElementById('preview-ball');
+        let nextDropLevel = Math.floor(Math.random() * 2);
+        let canDrop = true;
 
-    Events.on(engine, 'collisionStart', (event) => {
-        const pairs = event.pairs;
-        for (let i = 0; i < pairs.length; i++) {
-            const bodyA = pairs[i].bodyA; const bodyB = pairs[i].bodyB;
-            if (bodyA.level !== undefined && bodyB.level !== undefined && bodyA.level === bodyB.level && !bodyA.isMerging && !bodyB.isMerging && bodyA.level < LEVELS.length - 1) {
-                bodyA.isMerging = true; bodyB.isMerging = true; const nextLevel = bodyA.level + 1;
-                
-                setTimeout(() => {
-                    const midX = (bodyA.position.x + bodyB.position.x) / 2; const midY = (bodyA.position.y + bodyB.position.y) / 2;
-                    Composite.remove(world, [bodyA, bodyB]);
-                    const nextLevelData = LEVELS[nextLevel];
-                    const newBody = Bodies.circle(midX, midY, nextLevelData.radius, {
-                        restitution: 0.3, render: { sprite: { texture: nextLevelData.img, xScale: nextLevelData.scale, yScale: nextLevelData.scale } }
-                    });
-                    newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); Composite.add(world, newBody); 
-                    
-                    triggerBattle();
-                }, 50);
-            }
+        function updatePreview() {
+            const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
+            if (!isAutoDrop) previewImg.style.display = 'block';
         }
-    });
+        updatePreview();
+
+        gameSection.addEventListener('pointermove', (e) => {
+            if(isGameOver || isAutoDrop || !canDrop || currentMenu !== 'home') return;
+            const rect = gameSection.getBoundingClientRect();
+            let xPos = e.clientX - rect.left;
+            dropLine.style.display = 'block'; dropLine.style.left = xPos + 'px'; previewImg.style.left = xPos + 'px';
+        });
+        gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; previewImg.style.left = '50%'; });
+
+        function executeDrop(xPos) {
+            if (!canDrop || isGameOver || currentMenu !== 'home') return;
+            
+            const currentCost = energyCostBase * multiplier; 
+            if (!consumeEnergy(currentCost)) return;
+
+            const levelData = LEVELS[nextDropLevel];
+            const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
+            
+            const body = Bodies.circle(startX, 50, levelData.radius, {
+                restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
+            });
+            body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
+            Composite.add(world, body);
+
+            canDrop = false; previewImg.style.display = 'none'; dropLine.style.display = 'none';
+            
+            setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
+        }
+
+        gameSection.addEventListener('pointerdown', (e) => { if (isAutoDrop || currentMenu !== 'home') return; const rect = gameSection.getBoundingClientRect(); executeDrop(e.clientX - rect.left); });
+
+        window.toggleAutoDrop = function() {
+            const runToggle = () => {
+                isAutoDrop = !isAutoDrop; const btnAuto = document.getElementById('btn-auto');
+                if (isAutoDrop) {
+                    btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewImg.style.display = 'none'; dropLine.style.display = 'none';
+                    autoDropTimer = setInterval(() => {
+                        if (canDrop && !isGameOver && currentMenu === 'home') { executeDrop(Math.random() * width); }
+                    }, 600);
+                    showFloatingText(`오토 & 틸트 ON! 🤖📱`, window.innerWidth/2 - 70, window.innerHeight/2);
+                } else {
+                    btnAuto.classList.remove('active'); document.getElementById('auto-label').innerText = '오토: OFF'; clearInterval(autoDropTimer); updatePreview();
+                    if (!isTiltActive) { engine.gravity.x = 0; engine.gravity.y = 1; }
+                }
+            };
+
+            if (!isAutoDrop && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') { runToggle(); } 
+                        else { 
+                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); 
+                            gyroDebug.innerText = 'Gyro: 권한 거부됨';
+                        }
+                    }).catch(console.error);
+            } else { runToggle(); }
+        }
+
+        Events.on(engine, 'collisionStart', (event) => {
+            const pairs = event.pairs;
+            for (let i = 0; i < pairs.length; i++) {
+                const bodyA = pairs[i].bodyA; const bodyB = pairs[i].bodyB;
+                if (bodyA.level !== undefined && bodyB.level !== undefined && bodyA.level === bodyB.level && !bodyA.isMerging && !bodyB.isMerging && bodyA.level < LEVELS.length - 1) {
+                    bodyA.isMerging = true; bodyB.isMerging = true; const nextLevel = bodyA.level + 1;
+                    
+                    setTimeout(() => {
+                        const midX = (bodyA.position.x + bodyB.position.x) / 2; const midY = (bodyA.position.y + bodyB.position.y) / 2;
+                        Composite.remove(world, [bodyA, bodyB]);
+                        const nextLevelData = LEVELS[nextLevel];
+                        const newBody = Bodies.circle(midX, midY, nextLevelData.radius, {
+                            restitution: 0.3, render: { sprite: { texture: nextLevelData.img, xScale: nextLevelData.scale, yScale: nextLevelData.scale } }
+                        });
+                        newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); Composite.add(world, newBody); 
+                        
+                        triggerBattle();
+                    }, 50);
+                }
+            }
+        });
+    };
 </script>
 </body>
 </html>
