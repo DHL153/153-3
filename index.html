@@ -18,12 +18,11 @@
             width: 100%; max-width: 420px; height: 100dvh; 
             background: rgba(255, 255, 255, 0.95); position: relative;
             display: flex; flex-direction: column;
-            border: 4px solid #b9a0e6; 
             box-shadow: 0 10px 30px rgba(185, 160, 230, 0.4); overflow: hidden;
         }
         
         @media (min-width: 421px) {
-            #app { height: 95vh; border-radius: 16px; }
+            #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
         
         #board-section {
@@ -32,11 +31,9 @@
         }
         .board-header { font-weight: bold; color: #8e7cc3; margin-bottom: 4px; font-size: 13px;}
         
-        /* 💡 배경이 스크롤되는 역동적인 전투 무대 */
         #battle-stage {
             width: 90%; height: 80px; 
             background-color: #f1e9fb;
-            /* 바닥과 숲/구름이 스쳐지나가는 패턴 생성 */
             background-image: 
                 linear-gradient(90deg, rgba(255,255,255,0.7) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.7) 75%, transparent 75%, transparent),
                 linear-gradient(to top, #b9a0e6 0%, #b9a0e6 15px, transparent 15px);
@@ -44,7 +41,6 @@
             border: 2px solid #b9a0e6; border-radius: 12px;
             position: relative; overflow: hidden;
             box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
-            /* 우에서 좌로 무한 스크롤 애니메이션 */
             animation: scrollBg 1.2s linear infinite;
         }
         
@@ -55,23 +51,20 @@
 
         .character { position: absolute; font-size: 40px; top: 12px; transition: all 0.2s ease-out; }
         
-        /* 💡 영웅(졸라맨) 가운데 배치 및 우측 바라보기(scaleX(-1)) */
         .hero { 
             left: 40%; margin-left: -20px; 
             transform: scaleX(-1); 
             filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2)); 
         }
-        /* 공격 모션: 앞(우측)으로 찌르기 */
         .hero.attack { transform: scaleX(-1) translateX(-40px) rotate(-20deg) scale(1.2); }
         
-        /* 💡 적 애니메이션: 평소엔 화면 밖 대기 -> 머지 시 등장 -> 폭발 */
         .enemy { 
-            right: -60px; /* 초기 상태: 안 보임 */
+            right: -60px; 
             opacity: 0; 
             filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2)); 
         }
         .enemy.slide-in {
-            right: 15%; /* 화면 안으로 등장 */
+            right: 15%; 
             opacity: 1; 
         }
         .enemy.explode { 
@@ -91,9 +84,10 @@
         }
         canvas { display: block; width: 100%; height: 100%; }
         
+        /* 💡 미리보기 구슬이 상단 경계선에 잘리지 않도록 높이 60px로 여유롭게 하향 조정 & z-index 최상위 설정 */
         #preview-ball {
-            position: absolute; top: 30px; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 6; opacity: 0.8; display: none;
+            position: absolute; top: 60px; left: 50%; transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 20; opacity: 0.9; display: none;
         }
 
         #drop-line {
@@ -102,13 +96,14 @@
             pointer-events: none; display: none; z-index: 5; transform: translateX(-50%);
         }
 
+        /* 데드라인 라인도 같이 하향 조정 */
         #deadline-line {
-            position: absolute; top: 40px; left: 0; right: 0; height: 2px;
+            position: absolute; top: 75px; left: 0; right: 0; height: 2px;
             background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6;
             z-index: 4; pointer-events: none;
         }
         #warning-banner {
-            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
             background: #ff477e; color: white; padding: 6px 16px; border-radius: 20px;
             font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4);
             display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
@@ -238,14 +233,15 @@
     let energyCostBase = 1; 
     let itemCost = 10; 
 
-    const DEADLINE_Y = 40;
+    // 데드라인 및 좌표 설정 동기화
+    const DEADLINE_Y = 75;
     let isGameOver = false;
     let isWarning = false;
     let warningTimeRemaining = 5.0;
     let warningInterval = null;
 
     let energyRechargeInterval = null;
-    let energyTimeRemaining = 15; // 15초 충전
+    let energyTimeRemaining = 15; 
 
     let isTiltActive = false;
     let tiltInterval = null;
@@ -254,7 +250,6 @@
     let isAutoDrop = false;
     let autoDropTimer = null;
 
-    // 배틀 애니메이션 중복 실행을 막기 위한 락(Lock)
     let isBattling = false;
 
     const uiEnergy = document.getElementById('val-energy');
@@ -263,7 +258,6 @@
     const warningBanner = document.getElementById('warning-banner');
     const gyroDebug = document.getElementById('gyro-debug');
 
-    // 💡 이미지 기준 사이즈를 256으로 변경
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 15, img: 'images/lv01.png' }, { radius: 22, img: 'images/lv02.png' },
@@ -285,20 +279,16 @@
         document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
     }
 
-    // 💡 순차적 배틀 렌더링
     function triggerBattle() {
-        if (isBattling) return; // 이미 전투 애니메이션이 재생중이면 스킵 (과도한 겹침 방지)
+        if (isBattling) return; 
         isBattling = true;
 
-        // 1. 적이 우측에서 등장 (Slide-in)
         enemyEl.innerText = enemies[Math.floor(Math.random() * enemies.length)];
         enemyEl.className = 'character enemy slide-in';
 
-        // 2. 적 등장 완료 후 영웅 공격
         setTimeout(() => {
             heroEl.classList.add('attack');
             
-            // 3. 영웅 공격 모션 직후 적 처치 이펙트 발생
             setTimeout(() => {
                 heroEl.classList.remove('attack');
                 enemyEl.className = 'character enemy explode';
@@ -327,53 +317,48 @@
                 uiEnergy.innerText = energy;
                 showFloatingText(rewardText, rect.left - 20, rect.top, rewardColor);
 
-                // 4. 폭발 애니메이션 종료 후 적 상태 리셋
                 setTimeout(() => {
-                    enemyEl.className = 'character enemy'; // opacity 0으로 대기
-                    isBattling = false; // 전투 종료, 락 해제
+                    enemyEl.className = 'character enemy'; 
+                    isBattling = false; 
                 }, 400);
 
-            }, 150); // 영웅 찌르기 모션 시간
-        }, 200); // 적이 등장하여 멈출 때까지의 대기 시간
+            }, 150); 
+        }, 200); 
     }
 
     function checkRecharge() {
         const info = document.getElementById('recharge-info');
-        if (energy < 50) {
+        
+        if (energy <= 0 && !energyRechargeInterval) {
             info.style.display = 'block';
-            if (!energyRechargeInterval) {
-                energyTimeRemaining = 15;
-                info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
-                
-                energyRechargeInterval = setInterval(() => {
-                    energyTimeRemaining--;
-                    if (energyTimeRemaining <= 0) {
-                        energy += 10;
-                        uiEnergy.innerText = energy;
-                        showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
-                        
-                        if (energy >= 50) {
-                            clearInterval(energyRechargeInterval);
-                            energyRechargeInterval = null;
-                            info.style.display = 'none';
-                        } else {
-                            energyTimeRemaining = 15;
-                        }
+            energyTimeRemaining = 15;
+            info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+            
+            energyRechargeInterval = setInterval(() => {
+                energyTimeRemaining--;
+                if (energyTimeRemaining <= 0) {
+                    energy += 10;
+                    if (energy > 50) energy = 50;
+                    uiEnergy.innerText = energy;
+                    showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
+                    
+                    if (energy >= 50) {
+                        clearInterval(energyRechargeInterval);
+                        energyRechargeInterval = null;
+                        info.style.display = 'none';
                     } else {
-                        info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+                        energyTimeRemaining = 15;
                     }
-                }, 1000);
-            }
-        } else {
+                } else {
+                    info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+                }
+            }, 1000);
+        } else if (energy >= 50 && energyRechargeInterval) {
+            clearInterval(energyRechargeInterval);
+            energyRechargeInterval = null;
             info.style.display = 'none';
-            if (energyRechargeInterval) {
-                clearInterval(energyRechargeInterval);
-                energyRechargeInterval = null;
-            }
         }
     }
-    
-    checkRecharge();
 
     function consumeEnergy(amount) {
         if (energy < amount && amount !== 100) { 
@@ -383,6 +368,7 @@
         }
         energy -= amount;
         if (energy < 0) energy = 0; 
+        
         uiEnergy.innerText = energy; 
         checkRecharge();
         return true;
@@ -412,7 +398,7 @@
 
     const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
     Composite.add(world, [
-        Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions),
+        Bodies.rectangle(width / 2, height, width, 50, wallOptions),
         Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
         Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
         Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions)
@@ -538,9 +524,13 @@
     }
     updatePreview();
 
+    // 💡 모바일 터치 시 구슬 좌표가 튀는 현상을 막기 위해 offsetX 대신 clientX 사용
     gameSection.addEventListener('pointermove', (e) => {
         if(isGameOver || isAutoDrop || !canDrop) return;
-        dropLine.style.display = 'block'; dropLine.style.left = e.offsetX + 'px'; previewImg.style.left = e.offsetX + 'px';
+        const rect = gameSection.getBoundingClientRect();
+        let xPos = e.clientX - rect.left;
+        
+        dropLine.style.display = 'block'; dropLine.style.left = xPos + 'px'; previewImg.style.left = xPos + 'px';
     });
     gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; previewImg.style.left = '50%'; });
 
@@ -553,7 +543,8 @@
         const levelData = LEVELS[nextDropLevel];
         const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
         
-        const body = Bodies.circle(startX, 30, levelData.radius, {
+        // 💡 구슬이 천장에 가려지지 않도록 높이를 60px에서 떨어지도록 조치
+        const body = Bodies.circle(startX, 60, levelData.radius, {
             restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
         });
         body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
@@ -564,7 +555,11 @@
         setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
     }
 
-    gameSection.addEventListener('pointerdown', (e) => { if (isAutoDrop) return; executeDrop(e.offsetX); });
+    gameSection.addEventListener('pointerdown', (e) => { 
+        if (isAutoDrop) return; 
+        const rect = gameSection.getBoundingClientRect();
+        executeDrop(e.clientX - rect.left); 
+    });
 
     window.toggleAutoDrop = function() {
         const runToggle = () => {
