@@ -38,11 +38,10 @@
             background: #fdfbf7; padding: 4px 10px; border-radius: 12px; 
             font-size: 13px; font-weight: bold; border: 1px solid #e8dff5; display: flex; align-items: center; justify-content: center; gap: 4px;
         }
-        /* 💡 충전 멘트가 들어와도 상단바 크기가 변하지 않도록 높이/정렬 고정 및 visibility 속성 활용 */
         #energy-badge { flex-direction: column; gap: 2px; min-width: 90px; min-height: 42px; justify-content: center; }
         #recharge-info {
             font-size: 10px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-            visibility: hidden; /* 영역은 차지하되 보이지 않게 설정 */
+            visibility: hidden; 
         }
         .settings-btn { font-size: 20px; cursor: pointer; }
 
@@ -92,10 +91,8 @@
         }
         #game-section canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        /* 💡 구슬 대기 공간 극대화 축소 (top: 20px) */
         #preview-ball { position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; opacity: 0.9; display: none; }
         #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
-        /* 데드라인 위치 또한 위로 당김 (top: 45px) */
         #deadline-line { position: absolute; top: 45px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
         
         #warning-banner {
@@ -108,25 +105,24 @@
             flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10;
         }
         
-        .ui-guide { color: #6a4c9c; font-size: 10px; text-align: center; margin-bottom: 6px; font-weight: bold; }
-        
         .item-group { display: flex; justify-content: space-between; align-items: stretch; gap: 6px; }
+        
         .btn-item {
-            flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 800; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: none;
         }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
-        .btn-item span.icon-main { font-size: 15px; margin-bottom: 1px; display: block; text-shadow: none; }
+        .btn-item span.icon-main { font-size: 16px; margin-bottom: 2px; display: block; text-shadow: none; }
         
-        /* 💡 추가된 작은 에너지 비용 UI */
-        .cost-label { font-size: 9px; color: #ffeaa7; margin-top: 3px; font-weight: normal; opacity: 0.9; text-shadow: none;}
+        .cost-label { font-size: 10px; color: #d81b60; margin-top: 2px; font-weight: 800; text-shadow: none;}
 
-        .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; color: #fff; justify-content: center; }
+        .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; justify-content: center; }
         .btn-hammer { background: #82ccdd; box-shadow: 0 4px 0 #60a3bc; } 
-        .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; color: #574b90; } 
+        .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; } 
         .btn-tilt { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
-        .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); }
-        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; color: #8e7cc3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
-        .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); text-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
+        .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); color: #fff;}
+        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
+        .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
+
 
         /* ================= [ 제네릭 뷰 스타일 (캐릭터, 상점 등) ] ================= */
         .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; }
@@ -159,7 +155,6 @@
         .overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.85); color: #4a4e69; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 2000; display: none; backdrop-filter: blur(5px); }
         .action-btn { margin-top:20px; padding: 12px 24px; font-size:16px; border-radius:12px; border:2px solid #fff; background:#ffb3c6; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 0 #f78fb3; transition: all 0.1s; }
         .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        #gyro-debug { position: absolute; bottom: 65px; left: 10px; font-size: 11px; color: #b9a0e6; z-index: 999; font-weight: bold; pointer-events: none;}
     </style>
 </head>
 <body>
@@ -197,12 +192,10 @@
                 <img id="preview-ball" src="" alt="preview">
             </div>
 
-            <div id="ui-section">
-                <div class="ui-guide">에너지 소모 배수를 선택하고 상단 영역을 터치해 드롭하세요!</div>
-                
+            <div id="ui-section">                
                 <div class="item-group">
                     <button class="btn-item btn-mult" id="btn-mult" onclick="toggleMultiplier()">
-                        <span class="icon-main" id="mult-label">x1</span><div style="font-size:9px">배수</div>
+                        <span class="icon-main" id="mult-label">x1</span><div style="font-size:10px">배수</div>
                     </button>
                     
                     <button class="btn-item btn-hammer" onclick="useItem('hammer')">
@@ -287,8 +280,6 @@
         <div style="font-size: 16px; margin-bottom: 10px;">데드라인을 초과했습니다!</div>
         <button class="action-btn" onclick="restartGame()">다시 시작</button>
     </div>
-    
-    <div id="gyro-debug">Gyro: 대기중</div>
 </div>
 
 <script>
@@ -300,7 +291,7 @@
     let itemCost = 10; 
     let currentMenu = 'home';
 
-    const DEADLINE_Y = 45; // 데드라인을 위로 바짝 붙임
+    const DEADLINE_Y = 45; 
     let isGameOver = false;
     let isWarning = false;
     let warningTimeRemaining = 5.0;
@@ -315,7 +306,7 @@
     let autoDropTimer = null;
     let isBattling = false;
 
-    // 배수 버튼 순환 로직 (x1 -> x2 -> x5 -> x10 -> x1)
+    // 배수 버튼 순환 로직
     const multList = [1, 2, 5, 10];
     let multIndex = 0;
 
@@ -323,9 +314,8 @@
     const uiGold = document.getElementById('val-gold');
     const overlayGameOver = document.getElementById('overlay-gameover');
     const warningBanner = document.getElementById('warning-banner');
-    const gyroDebug = document.getElementById('gyro-debug');
 
-    // 구슬 크기 약 15% 축소 (12단계)
+    // 구슬 크기 약 15% 축소
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
@@ -336,7 +326,6 @@
         { radius: 125, img: 'images/lv11.png' }, { radius: 145, img: 'images/lv12.png' }
     ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
-    // 에너지 업데이트 UI 함수
     function updateEnergyUI() {
         uiEnergy.innerText = energy + " / 50";
     }
@@ -492,7 +481,6 @@
 
         window.addEventListener('deviceorientation', (event) => {
             let gamma = event.gamma || 0; let beta = event.beta || 0;
-            gyroDebug.innerText = `X: ${Math.round(gamma)}, Y: ${Math.round(beta)}`;
 
             if (!isTiltActive && !isAutoDrop) return;
             if (currentMenu !== 'home') return; 
@@ -593,7 +581,7 @@
                             if (permissionState === 'granted') { activateTiltTimer(); } 
                             else { 
                                 showFloatingText(`권한 필요! 📱`, window.innerWidth/2 - 40, window.innerHeight/2, "#ff7675"); 
-                                energy += itemCost; updateEnergyUI(); checkRecharge(); gyroDebug.innerText = 'Gyro: 거부됨';
+                                energy += itemCost; updateEnergyUI(); checkRecharge();
                             }
                         }).catch(console.error);
                 } else { activateTiltTimer(); }
@@ -628,7 +616,6 @@
             const levelData = LEVELS[nextDropLevel];
             const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
             
-            // 💡 대기 공간 축소 및 물리 엔진 구슬 생성 위치 (y=20)
             const body = Bodies.circle(startX, 20, levelData.radius, {
                 restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
             });
@@ -661,7 +648,7 @@
                     .then(permissionState => {
                         if (permissionState === 'granted') { runToggle(); } 
                         else { 
-                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); gyroDebug.innerText = 'Gyro: 거부됨';
+                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); 
                         }
                     }).catch(console.error);
             } else { runToggle(); }
