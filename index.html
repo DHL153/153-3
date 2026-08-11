@@ -84,9 +84,9 @@
         }
         canvas { display: block; width: 100%; height: 100%; }
         
-        /* 💡 미리보기 구슬이 상단 경계선에 잘리지 않도록 높이 60px로 여유롭게 하향 조정 & z-index 최상위 설정 */
+        /* 💡 구슬이 천장에 가려지지 않도록 높이를 더 아래(top: 70px)로 조정 */
         #preview-ball {
-            position: absolute; top: 60px; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 70px; left: 50%; transform: translate(-50%, -50%);
             pointer-events: none; z-index: 20; opacity: 0.9; display: none;
         }
 
@@ -96,14 +96,14 @@
             pointer-events: none; display: none; z-index: 5; transform: translateX(-50%);
         }
 
-        /* 데드라인 라인도 같이 하향 조정 */
+        /* 💡 데드라인 역시 함께 하향 조정 (top: 90px) */
         #deadline-line {
-            position: absolute; top: 75px; left: 0; right: 0; height: 2px;
+            position: absolute; top: 90px; left: 0; right: 0; height: 2px;
             background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6;
             z-index: 4; pointer-events: none;
         }
         #warning-banner {
-            position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
             background: #ff477e; color: white; padding: 6px 16px; border-radius: 20px;
             font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4);
             display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
@@ -166,7 +166,6 @@
 <body>
 
 <div id="app">
-    <!-- 전투 무대 -->
     <div id="board-section">
         <div class="board-header">⚔️ 구슬을 합성해 몬스터를 처치하세요!</div>
         <div id="battle-stage">
@@ -186,7 +185,7 @@
         <div class="stats-bar">
             <div style="display:flex; flex-direction:column;">
                 <div class="stat-box"><span>⚡에너지</span> <div id="val-energy">50</div></div>
-                <div id="recharge-info">15초 후에 10 에너지가 충전 됩니다. (15s)</div>
+                <div id="recharge-info">15초 후에 50 에너지가 충전 됩니다. (15s)</div>
             </div>
             <div class="stat-box" style="align-self: flex-start;"><span>💰골드</span> <div id="val-gold">0</div></div>
         </div>
@@ -216,7 +215,7 @@
         </div>
     </div>
 
-    <!-- 게임 오버 -->
+    <!-- 게임 오버 오버레이만 유지 (에너지 오버레이는 삭제) -->
     <div id="overlay-gameover" class="overlay">
         <div style="font-size: 32px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">GAME OVER</div>
         <div style="font-size: 16px; margin-bottom: 10px;">데드라인을 초과했습니다!</div>
@@ -233,15 +232,15 @@
     let energyCostBase = 1; 
     let itemCost = 10; 
 
-    // 데드라인 및 좌표 설정 동기화
-    const DEADLINE_Y = 75;
+    // 💡 변경된 데드라인 기준에 맞춰 동기화
+    const DEADLINE_Y = 90;
     let isGameOver = false;
     let isWarning = false;
     let warningTimeRemaining = 5.0;
     let warningInterval = null;
 
     let energyRechargeInterval = null;
-    let energyTimeRemaining = 15; 
+    let energyTimeRemaining = 15;
 
     let isTiltActive = false;
     let tiltInterval = null;
@@ -326,34 +325,30 @@
         }, 200); 
     }
 
+    // 💡 에너지가 0 이하일 때만 15초 카운트다운 되도록 수정
     function checkRecharge() {
         const info = document.getElementById('recharge-info');
         
         if (energy <= 0 && !energyRechargeInterval) {
             info.style.display = 'block';
             energyTimeRemaining = 15;
-            info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+            info.innerText = `15초 후에 50 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
             
             energyRechargeInterval = setInterval(() => {
                 energyTimeRemaining--;
                 if (energyTimeRemaining <= 0) {
-                    energy += 10;
-                    if (energy > 50) energy = 50;
+                    energy = 50;
                     uiEnergy.innerText = energy;
-                    showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
+                    showFloatingText(`에너지 충전 완료 ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, '#1dd1a1');
                     
-                    if (energy >= 50) {
-                        clearInterval(energyRechargeInterval);
-                        energyRechargeInterval = null;
-                        info.style.display = 'none';
-                    } else {
-                        energyTimeRemaining = 15;
-                    }
+                    clearInterval(energyRechargeInterval);
+                    energyRechargeInterval = null;
+                    info.style.display = 'none';
                 } else {
-                    info.innerText = `15초 후에 10 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
+                    info.innerText = `15초 후에 50 에너지가 충전 됩니다. (${energyTimeRemaining}s)`;
                 }
             }, 1000);
-        } else if (energy >= 50 && energyRechargeInterval) {
+        } else if (energy > 0 && energyRechargeInterval) {
             clearInterval(energyRechargeInterval);
             energyRechargeInterval = null;
             info.style.display = 'none';
@@ -524,7 +519,6 @@
     }
     updatePreview();
 
-    // 💡 모바일 터치 시 구슬 좌표가 튀는 현상을 막기 위해 offsetX 대신 clientX 사용
     gameSection.addEventListener('pointermove', (e) => {
         if(isGameOver || isAutoDrop || !canDrop) return;
         const rect = gameSection.getBoundingClientRect();
@@ -543,8 +537,8 @@
         const levelData = LEVELS[nextDropLevel];
         const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
         
-        // 💡 구슬이 천장에 가려지지 않도록 높이를 60px에서 떨어지도록 조치
-        const body = Bodies.circle(startX, 60, levelData.radius, {
+        // 💡 구슬 생성 위치를 top: 70px 위치와 동기화하여 완전히 안 보이게 잘리는 현상 방지
+        const body = Bodies.circle(startX, 70, levelData.radius, {
             restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
         });
         body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
