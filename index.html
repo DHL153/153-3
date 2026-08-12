@@ -6,13 +6,15 @@
     <title>미소녀 수박게임 + RPG 위기탈출 에디션</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; touch-action: none; }
+        * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; }
+        
         body { 
             margin: 0; padding: 0; 
             background: linear-gradient(135deg, #a0c4ff 0%, #c3aed6 50%, #ffcbf2 100%);
             display: flex; justify-content: center; align-items: center; 
             height: 100dvh; width: 100vw; overflow: hidden;
             color: #4a4e69; 
+            overscroll-behavior-y: none;
         }
         #app {
             width: 100%; max-width: 420px; height: 100dvh; 
@@ -61,10 +63,10 @@
         }
         .view-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: none; flex-direction: column; background: #fdfbf7; overflow-y: auto; touch-action: auto;
+            display: none; flex-direction: column; background: #fdfbf7; overflow: hidden; 
         }
         .view-container.active { display: flex; }
-        #view-home { background: transparent; overflow: hidden; touch-action: none; }
+        #view-home { background: transparent; touch-action: none; }
 
         /* ================= [ 뷰 1: 홈 (게임 전투 씬) ] ================= */
         #board-section {
@@ -97,7 +99,7 @@
 
         #game-section {
             flex: 1; background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(220, 240, 255, 0.6));
-            position: relative; overflow: hidden; cursor: crosshair;
+            position: relative; overflow: hidden; cursor: crosshair; touch-action: none;
         }
         #game-section canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
@@ -130,6 +132,7 @@
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
         .btn-item span.icon-main { font-size: 16px; margin-bottom: 2px; display: block; text-shadow: none; }
         .cost-label { font-size: 10px; color: #d81b60; margin-top: 2px; font-weight: 800; text-shadow: none;}
+        
         .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; justify-content: center; }
         .btn-hammer { background: #82ccdd; box-shadow: 0 4px 0 #60a3bc; } 
         .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; } 
@@ -138,17 +141,19 @@
         .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-        /* ================= [ 제네릭 뷰 스타일 (상점, 캐릭터 등) ] ================= */
+        /* ================= [ 제네릭 뷰 스타일 (상점, 캐릭터, 앨범 등) ] ================= */
         .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10;}
-        .view-content { padding: 20px; text-align: center; flex: 1; overflow-y: auto; }
+        .view-content { 
+            padding: 20px; text-align: center; flex: 1; 
+            overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; 
+            padding-bottom: 30px;
+        }
 
-        /* 캐릭터 그리드 (공용) */
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
         .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
         .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
 
-        /* 상점 스타일 */
         .shop-section { margin-bottom: 25px; text-align: left; }
         .shop-section-title { font-size: 15px; font-weight: 800; color: #6a4c9c; margin-bottom: 10px; padding-left: 6px; border-left: 4px solid #b9a0e6; }
         .btn-daily { width: 100%; background: #b9f6ca; border: 2px solid #69f0ae; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 900; color: #1b5e20; cursor: pointer; box-shadow: 0 4px 0 #69f0ae; transition: all 0.1s; margin-bottom: 20px;}
@@ -162,10 +167,10 @@
         .shop-item .item-cost { font-size: 12px; font-weight: 800; background: #fdfbf7; padding: 4px 8px; border-radius: 10px; color: #d81b60; border: 1px solid #e8dff5; width: 95%; text-align: center;}
         .item-cost.gold-cost { color: #d35400; }
 
-        /* ================= [ 💡 마이룸 전용 스타일 ] ================= */
+        /* ================= [ 마이룸 전용 스타일 ] ================= */
         #view-myroom { flex-direction: column; padding: 0; background: #fdfbf7; overflow: hidden; }
         .myroom-top {
-            flex: 1; width: 100%; position: relative; overflow: hidden; min-height: 40%;
+            flex: 1; width: 100%; position: relative; overflow: hidden; min-height: 40%; flex-shrink: 0;
             background: linear-gradient(to bottom, #fff0f5 0%, #fff0f5 55%, #e8dff5 55%, #e8dff5 100%);
             border-bottom: 4px solid #b9a0e6; display: flex; flex-direction: column;
         }
@@ -174,8 +179,11 @@
             background: rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 12px; border: 1px solid #b9a0e6; z-index: 10;
         }
         .myroom-bottom {
-            flex: 1.2; width: 100%; padding: 15px; overflow-y: auto; background: #fdfbf7;
+            flex: 1.2; width: 100%; padding: 15px; 
+            overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; 
+            background: #fdfbf7; padding-bottom: 30px;
         }
+        
         .myroom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .myroom-info-title { font-size: 15px; font-weight: 800; color: #6a4c9c; border-left: 4px solid #b9a0e6; padding-left: 6px; }
         .myroom-next-cost { font-size: 13px; font-weight: 800; color: #d35400; background: #fff59d; padding: 4px 10px; border-radius: 12px; border: 1px solid #f6c026; }
@@ -193,7 +201,7 @@
         .room-shop-item.owned:active { transform: none; box-shadow: 0 4px 0 #e8dff5; }
         .room-shop-item.owned .status { background: #b8e994; color: #1b5e20; border-color: #78e08f; }
 
-        /* ================= [ 💡 앨범 전용 스타일 (신규 구현) ] ================= */
+        /* ================= [ 앨범 전용 스타일 ] ================= */
         .album-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; padding-bottom: 20px; }
         .album-card { 
             background: white; border: 2px solid #e8dff5; border-radius: 16px; padding: 25px 10px; 
@@ -230,7 +238,6 @@
 <body>
 
 <div id="app">
-    <!-- 상단 고정 상태바 -->
     <div id="top-bar">
         <div class="profile-pic">👩</div>
         <div class="top-stats">
@@ -301,7 +308,7 @@
         <!-- 뷰 3: 상점 -->
         <div id="view-shop" class="view-container">
             <div class="view-title">상점</div>
-            <div class="view-content" style="display:block; text-align: left; padding: 15px;">
+            <div class="view-content">
                 <button class="btn-daily" id="btn-daily" onclick="claimDailyReward()">
                     🎁 일일 보상 받기<br>
                     <span style="font-size:13px; font-weight:bold; color:#27ae60;">에너지 +50 / 골드 +100</span>
@@ -361,7 +368,7 @@
             </div>
         </div>
 
-        <!-- 💡 뷰 5: 앨범 (4가지 카테고리 적용) -->
+        <!-- 뷰 5: 앨범 -->
         <div id="view-album" class="view-container">
             <div class="view-title">앨범</div>
             
@@ -442,7 +449,7 @@
 
     let isDailyClaimed = false; 
 
-    // 마이룸 이모지 관리
+    // 마이룸 상태 관리
     let roomItemsOwned = new Array(12).fill(false);
     let nextRoomCost = 100; 
     const ROOM_EMOJIS = ['🪴', '🧸', '📚', '☕', '📺', '🎸', '🕹️', '🐈', '🖼️', '🕰️', '🛋️', '🛏️'];
@@ -603,14 +610,12 @@
         renderMyRoom();
     }
 
-    // ================= [ 💡 앨범 스크립트 (신규) ] =================
+    // ================= [ 앨범 스크립트 ] =================
     window.openAlbum = function(category) {
         if (category === 'animal') {
-            // 메인 카테고리 숨기고 서브(상세) 보여주기
             document.getElementById('album-main').style.display = 'none';
             document.getElementById('album-sub').style.display = 'block';
             
-            // 동물농장(12개) 렌더링
             const grid = document.getElementById('album-grid-container');
             grid.innerHTML = '';
             LEVELS.forEach((lv, index) => {
@@ -651,7 +656,6 @@
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-' + menuId).classList.add('active');
 
-        // 다른 메뉴로 이동할 때 앨범 상태 초기화
         if (menuId === 'album') closeAlbum();
         if (menuId === 'character') renderCharacterGrid();
         if (menuId === 'myroom') renderMyRoom();
@@ -769,9 +773,10 @@
 
         Render.run(render); Runner.run(Runner.create(), engine);
 
+        // 💡 물리적 바닥선(y=height+10) 상향 조정으로 화면 아래 경계선 겹침 완벽 방지
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
         Composite.add(world, [
-            Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions),
+            Bodies.rectangle(width / 2, height + 10, width, 50, wallOptions),
             Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
             Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
             Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions)
