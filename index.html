@@ -24,7 +24,6 @@
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
 
-        /* 💡 거대 폭발 화면 흔들림 효과 */
         @keyframes shakeScreen {
             0% { transform: translate(2px, 2px) rotate(0deg); }
             20% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -35,7 +34,7 @@
         }
         .shake-active { animation: shakeScreen 0.5s ease-in-out; }
 
-        /* ================= [ 상단 프로필/상태/설정 바 ] ================= */
+        /* ================= [ 상단 바 ] ================= */
         #top-bar {
             display: flex; justify-content: space-between; align-items: center;
             padding: 8px 12px; background: #fff; border-bottom: 2px solid #e8dff5; flex-shrink: 0; z-index: 20;
@@ -49,11 +48,10 @@
             background: #fdfbf7; padding: 4px 10px; border-radius: 12px; 
             font-size: 13px; font-weight: bold; border: 1px solid #e8dff5; display: flex; align-items: center; justify-content: center; gap: 4px;
         }
-        /* 상단바 크기 고정 */
         #energy-badge { flex-direction: column; gap: 2px; min-width: 90px; min-height: 42px; justify-content: center; }
         #recharge-info {
             font-size: 10px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-            visibility: hidden; /* 보이지 않을 때도 높이 유지 */
+            visibility: hidden; 
         }
         .settings-btn { font-size: 20px; cursor: pointer; }
 
@@ -73,7 +71,6 @@
             flex-shrink: 0; height: 145px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
             display: flex; justify-content: center; align-items: center; padding: 5px 10px; z-index: 10;
         }
-        
         #battle-stage {
             width: 100%; height: 135px; background-color: #f1e9fb;
             background-image: 
@@ -86,14 +83,12 @@
 
         .character { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; }
         .hero { left: 35%; margin-left: -32px; transform: scaleX(-1); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
-        
         .hero.attack { transform: scaleX(-1) translateX(-60px) rotate(-20deg) scale(1.2); }
         .hero.happy { transform: scaleX(-1) translateY(-15px) scale(1.1); filter: drop-shadow(0 0 15px #f6e58d); }
         
         .enemy { right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
         .enemy.slide-in { right: 15%; opacity: 1; }
         .enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
-        
         @keyframes explodeAnim { 
             0% { transform: scale(1); opacity: 1; filter: brightness(1); } 
             50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 15px #ff4757); } 
@@ -110,7 +105,6 @@
         #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
         #deadline-line { position: absolute; top: 45px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
         
-        /* 피버 배너 */
         #fever-banner {
             position: absolute; top: 5px; left: 50%; transform: translateX(-50%); background: #f6e58d; color: #574b90; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(246, 229, 141, 0.6); display: none; z-index: 10; animation: pulseFever 0.4s infinite alternate; white-space: nowrap;
         }
@@ -121,27 +115,21 @@
         }
         @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.05); } }
 
-        /* 싹쓸이 폭발 이펙트 */
         #wipeout-anim {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             font-size: 150px; z-index: 100; filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); pointer-events: none;
         }
 
-        /* ================= [ 게임 하단 UI (버튼 5개) ] ================= */
         #ui-section {
             flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10;
         }
-        
         .item-group { display: flex; justify-content: space-between; align-items: stretch; gap: 6px; }
-        
         .btn-item {
             flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 800; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: none;
         }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
         .btn-item span.icon-main { font-size: 16px; margin-bottom: 2px; display: block; text-shadow: none; }
-        
         .cost-label { font-size: 10px; color: #d81b60; margin-top: 2px; font-weight: 800; text-shadow: none;}
-
         .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; justify-content: center; }
         .btn-hammer { background: #82ccdd; box-shadow: 0 4px 0 #60a3bc; } 
         .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; } 
@@ -150,15 +138,36 @@
         .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-
         /* ================= [ 제네릭 뷰 스타일 (캐릭터, 상점 등) ] ================= */
-        .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; }
-        .view-content { padding: 20px; text-align: center; flex: 1; }
+        .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10;}
+        .view-content { padding: 20px; text-align: center; flex: 1; overflow-y: auto; }
 
+        /* 캐릭터 그리드 */
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
         .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
         .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
+
+        /* 💡 상점 그리드 및 버튼 디자인 */
+        .shop-section { margin-bottom: 25px; text-align: left; }
+        .shop-section-title { font-size: 15px; font-weight: 800; color: #6a4c9c; margin-bottom: 10px; padding-left: 6px; border-left: 4px solid #b9a0e6; }
+        
+        .btn-daily { 
+            width: 100%; background: #b9f6ca; border: 2px solid #69f0ae; border-radius: 12px; padding: 15px; 
+            font-size: 16px; font-weight: 900; color: #1b5e20; cursor: pointer; box-shadow: 0 4px 0 #69f0ae; transition: all 0.1s; margin-bottom: 20px;
+        }
+        .btn-daily:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .btn-daily:disabled { background: #e0e0e0; border-color: #bdc3c7; color: #7f8c8d; box-shadow: 0 4px 0 #bdc3c7; cursor: not-allowed; transform: none; }
+
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .shop-item { 
+            background: #fff; border: 2px solid #e8dff5; border-radius: 12px; padding: 12px 5px; 
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor: pointer; transition: all 0.1s;
+        }
+        .shop-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .shop-item .item-amount { font-size: 15px; font-weight: 900; color: #4a4e69; margin-bottom: 8px; }
+        .shop-item .item-cost { font-size: 12px; font-weight: 800; background: #fdfbf7; padding: 4px 8px; border-radius: 10px; color: #d81b60; border: 1px solid #e8dff5; width: 95%; text-align: center;}
+        .item-cost.gold-cost { color: #d35400; }
 
         /* ================= [ 공통 하단 네비게이션 바 ] ================= */
         #bottom-nav {
@@ -187,7 +196,7 @@
 <body>
 
 <div id="app">
-    <!-- 상단 고정 상태바 (에너지/골드/설정) -->
+    <!-- 상단 고정 상태바 -->
     <div id="top-bar">
         <div class="profile-pic">👩</div>
         <div class="top-stats">
@@ -204,7 +213,6 @@
     <div id="main-content">
         <!-- 뷰 1: 홈 (게임 메인) -->
         <div id="view-home" class="view-container active">
-            
             <div id="board-section">
                 <div id="battle-stage">
                     <div id="hero" class="character hero">🤺</div>
@@ -226,21 +234,17 @@
                     <button class="btn-item btn-mult" id="btn-mult" onclick="toggleMultiplier()">
                         <span class="icon-main" id="mult-label">x1</span><div style="font-size:10px">배수</div>
                     </button>
-                    
                     <button class="btn-item btn-hammer" onclick="useItem('hammer')">
                         <span class="icon-main">🔨</span>망치
                         <div class="cost-label">⚡ 10</div>
                     </button>
-                    
                     <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
                         <span class="icon-main" style="font-size: 20px; margin-top:-2px;">🤖</span><div id="auto-label">오토: OFF</div>
                     </button>
-                    
                     <button class="btn-item btn-shake" onclick="useItem('shake')">
                         <span class="icon-main">🌪️</span>쉐이크
                         <div class="cost-label">⚡ 10</div>
                     </button>
-                    
                     <button class="btn-item btn-tilt" id="btn-tilt" onclick="useItem('tilt')">
                         <span class="icon-main">📱</span>
                         <div id="tilt-label">자이로</div>
@@ -260,11 +264,52 @@
             </div>
         </div>
 
-        <!-- 뷰 3: 상점 -->
+        <!-- 💡 뷰 3: 상점 (신규 업데이트) -->
         <div id="view-shop" class="view-container">
             <div class="view-title">상점</div>
-            <div class="view-content" style="display:flex; justify-content:center; align-items:center; height:100%;">
-                <div style="font-size: 20px; font-weight: bold; color: #b2bec3;">🛒<br>상점 준비중입니다.</div>
+            <div class="view-content" style="display:block; text-align: left; padding: 15px;">
+                
+                <button class="btn-daily" id="btn-daily" onclick="claimDailyReward()">
+                    🎁 일일 보상 받기<br>
+                    <span style="font-size:13px; font-weight:bold; color:#27ae60;">에너지 +50 / 골드 +100</span>
+                </button>
+
+                <div class="shop-section">
+                    <div class="shop-section-title">⚡ 에너지 구매</div>
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="buyEnergy(100, 1000)">
+                            <div class="item-amount">100 ⚡</div>
+                            <div class="item-cost gold-cost">1,000 💰</div>
+                        </div>
+                        <div class="shop-item" onclick="buyEnergy(200, 2000)">
+                            <div class="item-amount">200 ⚡</div>
+                            <div class="item-cost gold-cost">2,000 💰</div>
+                        </div>
+                        <div class="shop-item" onclick="buyEnergy(300, 3000)">
+                            <div class="item-amount">300 ⚡</div>
+                            <div class="item-cost gold-cost">3,000 💰</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shop-section">
+                    <div class="shop-section-title">💰 골드 환전</div>
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="buyGold(1000, 100)">
+                            <div class="item-amount">1,000 💰</div>
+                            <div class="item-cost">100 ⚡</div>
+                        </div>
+                        <div class="shop-item" onclick="buyGold(2000, 200)">
+                            <div class="item-amount">2,000 💰</div>
+                            <div class="item-cost">200 ⚡</div>
+                        </div>
+                        <div class="shop-item" onclick="buyGold(3000, 300)">
+                            <div class="item-amount">3,000 💰</div>
+                            <div class="item-cost">300 ⚡</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -304,7 +349,7 @@
         </div>
     </div>
 
-    <!-- 💡 위기 탈출 오버레이 (신규) -->
+    <!-- 위기 탈출 오버레이 -->
     <div id="overlay-crisis" class="overlay">
         <div style="font-size: 28px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">🚨 위기 발생! 🚨</div>
         <div style="font-size: 14px; margin-bottom: 25px; text-align:center; line-height:1.4;">
@@ -325,10 +370,12 @@
     const COST_REVIVE = 3;
     const COST_RESTART = 10;
 
+    let isDailyClaimed = false; // 상점 일일 보상 상태
+
     const DEADLINE_Y = 45; 
     let isGameOver = false;
     let isWarning = false;
-    let isCrisis = false; // 위기 팝업 띄워진 상태
+    let isCrisis = false; 
     let warningTimeRemaining = 5.0;
     let warningInterval = null;
 
@@ -344,7 +391,6 @@
     let autoDropTimer = null;
     let isBattling = false;
 
-    // 배수 버튼 순환 로직
     const multList = [1, 2, 5, 10];
     let multIndex = 0;
 
@@ -358,7 +404,6 @@
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
 
-    // 구슬 크기 약 15% 축소
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
@@ -371,10 +416,11 @@
 
     function updateEnergyUI() {
         uiEnergy.innerText = energy + " / 50";
+        uiGold.innerText = gold.toLocaleString(); // 골드 콤마 표시
     }
     updateEnergyUI(); 
 
-    // 💡 글로벌 15초 자동 충전 루프
+    // 글로벌 15초 자동 충전 루프
     setInterval(() => {
         const info = document.getElementById('recharge-info');
         if (energy < 50) {
@@ -384,7 +430,7 @@
                 energy += 10;
                 if (energy > 50) energy = 50;
                 updateEnergyUI();
-                showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
+                showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, 50, '#1dd1a1');
                 energyTimeRemaining = 15;
             }
             info.innerText = `⏳ ${energyTimeRemaining}s (+10)`;
@@ -393,6 +439,47 @@
             energyTimeRemaining = 15;
         }
     }, 1000);
+
+    // ================= [ 상점 스크립트 ] =================
+    window.claimDailyReward = function() {
+        if (isDailyClaimed) {
+            showFloatingText("오늘은 이미 받으셨습니다!", window.innerWidth/2 - 80, window.innerHeight/2, "#ff7675");
+            return;
+        }
+        energy += 50;
+        gold += 100;
+        isDailyClaimed = true;
+        
+        updateEnergyUI();
+        
+        const btn = document.getElementById('btn-daily');
+        btn.disabled = true;
+        btn.innerHTML = "✅ 보상 획득 완료";
+        showFloatingText("일일 보상 획득! 🎁", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
+    }
+
+    window.buyEnergy = function(amount, cost) {
+        if (gold < cost) {
+            showFloatingText("골드가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675");
+            return;
+        }
+        gold -= cost;
+        energy += amount;
+        updateEnergyUI();
+        showFloatingText(`에너지 +${amount} ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
+    }
+
+    window.buyGold = function(amount, cost) {
+        if (energy < cost) {
+            showFloatingText("에너지가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675");
+            return;
+        }
+        energy -= cost;
+        gold += amount;
+        updateEnergyUI();
+        showFloatingText(`골드 +${amount} 💰`, window.innerWidth/2 - 50, window.innerHeight/2, "#f6e58d");
+    }
+
 
     window.toggleMultiplier = function() {
         multIndex = (multIndex + 1) % multList.length;
@@ -434,7 +521,6 @@
         document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
     }
 
-    // 피버 모드 로직
     function activateFeverMode() {
         if (isFeverMode) return;
         isFeverMode = true;
@@ -480,7 +566,6 @@
                 let rewardText = ""; let rewardColor = "#fff";
                 const rect = enemyEl.getBoundingClientRect();
                 
-                // 💡 피버 시 골드 보상 2배
                 const feverMult = isFeverMode ? 2 : 1;
 
                 if (rand < 4) { 
@@ -492,12 +577,12 @@
                     rewardText = `-${amount} 💰`; rewardColor = "#ff7675"; 
                 } else if (rand < 8) { 
                     energy += 15; if (energy > 50) energy = 50;
-                    rewardText = `+15 ⚡`; rewardColor = "#b9f6ca"; updateEnergyUI();
+                    rewardText = `+15 ⚡`; rewardColor = "#b9f6ca"; updateEnergyUI(); 
                 } else { 
                     rewardText = `처치! ⚔️`; rewardColor = "#fff"; 
                 }
                 
-                uiGold.innerText = gold; updateEnergyUI();
+                updateEnergyUI();
                 showFloatingText(rewardText, rect.left - 20, rect.top + 30, rewardColor);
                 setTimeout(() => { enemyEl.className = 'character enemy'; isBattling = false; }, 400);
             }, 150); 
@@ -505,9 +590,7 @@
     }
 
     function consumeEnergy(amount, isDrop = false) {
-        // 피버 모드일 때 구슬 떨구는 에너지는 무료!
         if (isDrop && isFeverMode) return true;
-
         if (energy < amount) { 
             showFloatingText("에너지가 부족합니다.", window.innerWidth/2 - 60, window.innerHeight/2 + 20, "#ff7675"); 
             if (isAutoDrop) toggleAutoDrop();
@@ -593,11 +676,10 @@
                     warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
                     if (warningTimeRemaining <= 0) { 
                         clearInterval(warningInterval); 
-                        triggerCrisis(); // 💡 0초 도달 시 위기 팝업 발동
+                        triggerCrisis();
                     }
                 }, 100);
             } else if (!isOverflow && isWarning) { 
-                // 💡 시간 내에 스스로 해결한 경우 경고만 제거
                 isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; 
             }
         });
@@ -609,13 +691,11 @@
             overlayCrisis.style.display = 'flex';
         }
 
-        // 💡 1. 비상 탈출 (3 에너지)
         window.rescueGame = function() {
             if (!consumeEnergy(COST_REVIVE)) return;
             
             overlayCrisis.style.display = 'none';
             
-            // 상단 구슬 3개 파괴하여 위기 모면
             let bodies = Composite.allBodies(world).filter(b => b.level !== undefined);
             bodies.sort((a, b) => a.position.y - b.position.y);
             const targets = bodies.slice(0, 3);
@@ -624,10 +704,9 @@
             showFloatingText(`위기 탈출!`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
             
             isCrisis = false;
-            activateFeverMode(); // 💡 위기 극복 피버 발동
+            activateFeverMode(); 
         }
 
-        // 💡 2. 포기 및 재시작 (10 에너지)
         window.giveUpGame = function() {
             if (!consumeEnergy(COST_RESTART)) return;
             
@@ -669,7 +748,7 @@
                 if(allBalls.length > 0) {
                     const target = allBalls[Math.floor(Math.random() * allBalls.length)];
                     const reward = (target.level + 1) * 30;
-                    gold += reward; uiGold.innerText = gold;
+                    gold += reward; updateEnergyUI();
                     Composite.remove(world, target); 
                     showFloatingText(`뿅망치! +${reward}💰`, target.position.x, target.position.y, '#f6e58d');
                 }
@@ -753,9 +832,7 @@
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') { runToggle(); } 
-                        else { 
-                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); 
-                        }
+                        else { showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); }
                     }).catch(console.error);
             } else { runToggle(); }
         }
