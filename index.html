@@ -26,6 +26,7 @@
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
 
+        /* 거대 폭발 흔들림 */
         @keyframes shakeScreen {
             0% { transform: translate(2px, 2px) rotate(0deg); }
             20% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -35,6 +36,20 @@
             100% { transform: translate(0px, 0px) rotate(0deg); }
         }
         .shake-active { animation: shakeScreen 0.5s ease-in-out; }
+
+        /* 💡 타격감: 미세한 합성 흔들림 (과하지 않게) */
+        @keyframes mergeShake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+        .merge-shake { animation: mergeShake 0.15s ease-in-out; }
+
+        /* 💡 타격감: 파티클(빛 팽창) 애니메이션 */
+        @keyframes popEffect { 
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; } 
+        }
 
         /* ================= [ 상단 바 ] ================= */
         #top-bar {
@@ -154,6 +169,7 @@
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
         .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
 
+        /* 상점 스타일 */
         .shop-section { margin-bottom: 25px; text-align: left; }
         .shop-section-title { font-size: 15px; font-weight: 800; color: #6a4c9c; margin-bottom: 10px; padding-left: 6px; border-left: 4px solid #b9a0e6; }
         .btn-daily { width: 100%; background: #b9f6ca; border: 2px solid #69f0ae; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 900; color: #1b5e20; cursor: pointer; box-shadow: 0 4px 0 #69f0ae; transition: all 0.1s; margin-bottom: 20px;}
@@ -178,6 +194,7 @@
             position: absolute; top: 10px; left: 15px; font-size: 14px; font-weight: 800; color: #b9a0e6;
             background: rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 12px; border: 1px solid #b9a0e6; z-index: 10;
         }
+        
         .myroom-bottom {
             flex: 1.2; width: 100%; padding: 15px; 
             overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; 
@@ -238,6 +255,7 @@
 <body>
 
 <div id="app">
+    <!-- 상단 고정 상태바 -->
     <div id="top-bar">
         <div class="profile-pic">👩</div>
         <div class="top-stats">
@@ -308,7 +326,7 @@
         <!-- 뷰 3: 상점 -->
         <div id="view-shop" class="view-container">
             <div class="view-title">상점</div>
-            <div class="view-content">
+            <div class="view-content" style="display:block; text-align: left;">
                 <button class="btn-daily" id="btn-daily" onclick="claimDailyReward()">
                     🎁 일일 보상 받기<br>
                     <span style="font-size:13px; font-weight:bold; color:#27ae60;">에너지 +50 / 골드 +100</span>
@@ -372,7 +390,6 @@
         <div id="view-album" class="view-container">
             <div class="view-title">앨범</div>
             
-            <!-- 앨범 메인 (카테고리 목록) -->
             <div class="view-content" id="album-main">
                 <div class="album-grid">
                     <div class="album-card" onclick="openAlbum('animal')">
@@ -394,14 +411,14 @@
                 </div>
             </div>
 
-            <!-- 앨범 상세 (동물농장 내부) -->
+            <!-- 동물농장 내부 -->
             <div class="view-content" id="album-sub" style="display:none; padding-top:10px;">
                 <div style="display:flex; align-items:center; margin-bottom:15px;">
                     <div onclick="closeAlbum()" style="font-size:14px; font-weight:bold; color:#b9a0e6; cursor:pointer; padding:5px 10px; background:#fff; border:2px solid #e8dff5; border-radius:8px; box-shadow:0 3px 0 #e8dff5; transition: transform 0.1s;">🔙 목록으로</div>
                     <div style="flex:1; text-align:center; font-size:16px; font-weight:900; color:#6a4c9c; margin-right:80px;">동물농장</div>
                 </div>
                 <div class="char-grid" id="album-grid-container">
-                    <!-- JS로 동물농장(12개 구슬) 렌더링 -->
+                    <!-- JS 렌더링 -->
                 </div>
             </div>
         </div>
@@ -438,7 +455,6 @@
 </div>
 
 <script>
-    // 전역 상태 변수
     let energy = 50; 
     let gold = 0;
     let multiplier = 1;
@@ -449,7 +465,7 @@
 
     let isDailyClaimed = false; 
 
-    // 마이룸 상태 관리
+    // 마이룸 이모지 관리
     let roomItemsOwned = new Array(12).fill(false);
     let nextRoomCost = 100; 
     const ROOM_EMOJIS = ['🪴', '🧸', '📚', '☕', '📺', '🎸', '🕹️', '🐈', '🖼️', '🕰️', '🛋️', '🛏️'];
@@ -672,6 +688,31 @@
         });
     }
 
+    // 💡 타격감 (빛 팽창) 연출 함수 추가
+    function createMergeEffect(x, y, level) {
+        const effect = document.createElement('div');
+        effect.style.position = 'absolute';
+        effect.style.left = x + 'px';
+        effect.style.top = y + 'px';
+        const size = 30 + (level * 10);
+        effect.style.width = size + 'px';
+        effect.style.height = size + 'px';
+        effect.style.transform = 'translate(-50%, -50%)';
+        effect.style.background = 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0) 70%)';
+        effect.style.borderRadius = '50%';
+        effect.style.pointerEvents = 'none';
+        effect.style.zIndex = '15';
+        effect.style.animation = 'popEffect 0.3s ease-out forwards';
+        document.getElementById('game-section').appendChild(effect);
+        setTimeout(() => effect.remove(), 300);
+
+        // 큰 구슬 결합 시 화면 미세 진동
+        if (level >= 4) {
+            appContainer.classList.add('merge-shake');
+            setTimeout(() => appContainer.classList.remove('merge-shake'), 150);
+        }
+    }
+
     function showFloatingText(text, x, y, color = '#fff') {
         const el = document.createElement('div'); el.className = 'floating-text'; el.innerHTML = text;
         el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
@@ -773,7 +814,6 @@
 
         Render.run(render); Runner.run(Runner.create(), engine);
 
-        // 💡 물리적 바닥선(y=height+10) 상향 조정으로 화면 아래 경계선 겹침 완벽 방지
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
         Composite.add(world, [
             Bodies.rectangle(width / 2, height + 10, width, 50, wallOptions),
@@ -936,6 +976,7 @@
         const previewImg = document.getElementById('preview-ball');
         let nextDropLevel = Math.floor(Math.random() * 2);
         let canDrop = true;
+        let lastMouseX = width / 2; // 💡 드래그용 좌표 변수
 
         window.updatePreview = function() {
             const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
@@ -944,12 +985,31 @@
         }
         updatePreview();
 
+        // 💡 드래그 앤 드롭 로직 (터치 유지 시 이동, 떼면 드롭)
+        gameSection.addEventListener('pointerdown', (e) => { 
+            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || !canDrop) return;
+            const rect = gameSection.getBoundingClientRect(); 
+            lastMouseX = e.clientX - rect.left;
+            dropLine.style.display = 'block'; 
+            dropLine.style.left = lastMouseX + 'px'; 
+            previewImg.style.left = lastMouseX + 'px';
+        });
+
         gameSection.addEventListener('pointermove', (e) => {
             if(isGameOver || isCrisis || isAutoDrop || !canDrop || currentMenu !== 'home') return;
-            const rect = gameSection.getBoundingClientRect(); let xPos = e.clientX - rect.left;
-            dropLine.style.display = 'block'; dropLine.style.left = xPos + 'px'; previewImg.style.left = xPos + 'px';
+            const rect = gameSection.getBoundingClientRect(); 
+            lastMouseX = e.clientX - rect.left;
+            dropLine.style.display = 'block'; 
+            dropLine.style.left = lastMouseX + 'px'; 
+            previewImg.style.left = lastMouseX + 'px';
         });
-        gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; previewImg.style.left = '50%'; });
+
+        gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; });
+
+        gameSection.addEventListener('pointerup', (e) => { 
+            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || !canDrop) return;
+            executeDrop(lastMouseX); 
+        });
 
         function executeDrop(xPos) {
             if (!canDrop || isGameOver || isCrisis || currentMenu !== 'home') return;
@@ -969,8 +1029,6 @@
             canDrop = false; previewImg.style.display = 'none'; dropLine.style.display = 'none';
             setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
         }
-
-        gameSection.addEventListener('pointerdown', (e) => { if (isAutoDrop || currentMenu !== 'home') return; const rect = gameSection.getBoundingClientRect(); executeDrop(e.clientX - rect.left); });
 
         window.toggleAutoDrop = function() {
             const runToggle = () => {
@@ -1018,7 +1076,14 @@
                         const newBody = Bodies.circle(midX, midY, nextLevelData.radius, {
                             restitution: 0.3, render: { sprite: { texture: nextLevelData.img, xScale: nextLevelData.scale, yScale: nextLevelData.scale } }
                         });
-                        newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); Composite.add(world, newBody); 
+                        newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); 
+                        
+                        // 💡 타격감: 합성 시 살짝 위로 통통 튀어오름
+                        Matter.Body.setVelocity(newBody, { x: 0, y: -2.5 });
+                        Composite.add(world, newBody); 
+                        
+                        // 💡 타격감: 시각적 빛 파티클 효과 및 흔들림
+                        createMergeEffect(midX, midY, nextLevel);
                         
                         triggerBattle();
                     }, 50);
