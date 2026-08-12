@@ -37,7 +37,7 @@
         }
         .shake-active { animation: shakeScreen 0.5s ease-in-out; }
 
-        /* 💡 타격감: 미세한 합성 흔들림 (과하지 않게) */
+        /* 💡 타격감: 미세한 합성 흔들림 */
         @keyframes mergeShake {
             0% { transform: translate(1px, 1px); }
             50% { transform: translate(-1px, -1px); }
@@ -194,13 +194,11 @@
             position: absolute; top: 10px; left: 15px; font-size: 14px; font-weight: 800; color: #b9a0e6;
             background: rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 12px; border: 1px solid #b9a0e6; z-index: 10;
         }
-        
         .myroom-bottom {
             flex: 1.2; width: 100%; padding: 15px; 
             overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; 
             background: #fdfbf7; padding-bottom: 30px;
         }
-        
         .myroom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .myroom-info-title { font-size: 15px; font-weight: 800; color: #6a4c9c; border-left: 4px solid #b9a0e6; padding-left: 6px; }
         .myroom-next-cost { font-size: 13px; font-weight: 800; color: #d35400; background: #fff59d; padding: 4px 10px; border-radius: 12px; border: 1px solid #f6c026; }
@@ -411,7 +409,6 @@
                 </div>
             </div>
 
-            <!-- 동물농장 내부 -->
             <div class="view-content" id="album-sub" style="display:none; padding-top:10px;">
                 <div style="display:flex; align-items:center; margin-bottom:15px;">
                     <div onclick="closeAlbum()" style="font-size:14px; font-weight:bold; color:#b9a0e6; cursor:pointer; padding:5px 10px; background:#fff; border:2px solid #e8dff5; border-radius:8px; box-shadow:0 3px 0 #e8dff5; transition: transform 0.1s;">🔙 목록으로</div>
@@ -455,6 +452,7 @@
 </div>
 
 <script>
+    // 전역 상태 변수
     let energy = 50; 
     let gold = 0;
     let multiplier = 1;
@@ -507,7 +505,7 @@
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
 
-    // 구슬 이미지 데이터
+    // 구슬 이미지 데이터 (크기 축소)
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
@@ -688,7 +686,7 @@
         });
     }
 
-    // 💡 타격감 (빛 팽창) 연출 함수 추가
+    // 💡 타격감 효과
     function createMergeEffect(x, y, level) {
         const effect = document.createElement('div');
         effect.style.position = 'absolute';
@@ -706,7 +704,6 @@
         document.getElementById('game-section').appendChild(effect);
         setTimeout(() => effect.remove(), 300);
 
-        // 큰 구슬 결합 시 화면 미세 진동
         if (level >= 4) {
             appContainer.classList.add('merge-shake');
             setTimeout(() => appContainer.classList.remove('merge-shake'), 150);
@@ -802,7 +799,9 @@
     window.onload = () => {
         const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events;
         const gameSection = document.getElementById('game-section');
-        const width = gameSection.clientWidth; const height = gameSection.clientHeight;
+        
+        let width = gameSection.clientWidth; 
+        let height = gameSection.clientHeight;
 
         const engine = Engine.create({ enableSleeping: false });
         const world = engine.world;
@@ -815,12 +814,27 @@
         Render.run(render); Runner.run(Runner.create(), engine);
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
-        Composite.add(world, [
-            Bodies.rectangle(width / 2, height + 10, width, 50, wallOptions),
-            Bodies.rectangle(-25, 0, 50, height * 5, wallOptions),
-            Bodies.rectangle(width + 25, 0, 50, height * 5, wallOptions),
-            Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions)
-        ]);
+        const floor = Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions);
+        const leftWall = Bodies.rectangle(-25, height / 2, 50, height * 5, wallOptions);
+        const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height * 5, wallOptions);
+        const ceiling = Bodies.rectangle(width / 2, -800, width * 2, 100, wallOptions);
+        
+        Composite.add(world, [floor, leftWall, rightWall, ceiling]);
+
+        // 💡 화면 리사이즈 시 물리엔진 바닥과 벽 재배치 (빈 공간 방지)
+        window.addEventListener('resize', () => {
+            width = gameSection.clientWidth;
+            height = gameSection.clientHeight;
+            
+            render.canvas.width = width * window.devicePixelRatio;
+            render.canvas.height = height * window.devicePixelRatio;
+            render.options.width = width;
+            render.options.height = height;
+
+            Matter.Body.setPosition(floor, { x: width / 2, y: height + 25 });
+            Matter.Body.setPosition(leftWall, { x: -25, y: height / 2 });
+            Matter.Body.setPosition(rightWall, { x: width + 25, y: height / 2 });
+        });
 
         window.addEventListener('deviceorientation', (event) => {
             let gamma = event.gamma || 0; let beta = event.beta || 0;
@@ -976,7 +990,7 @@
         const previewImg = document.getElementById('preview-ball');
         let nextDropLevel = Math.floor(Math.random() * 2);
         let canDrop = true;
-        let lastMouseX = width / 2; // 💡 드래그용 좌표 변수
+        let lastMouseX = width / 2; 
 
         window.updatePreview = function() {
             const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
@@ -985,7 +999,6 @@
         }
         updatePreview();
 
-        // 💡 드래그 앤 드롭 로직 (터치 유지 시 이동, 떼면 드롭)
         gameSection.addEventListener('pointerdown', (e) => { 
             if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || !canDrop) return;
             const rect = gameSection.getBoundingClientRect(); 
@@ -1049,9 +1062,7 @@
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') { runToggle(); } 
-                        else { 
-                            showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); 
-                        }
+                        else { showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); }
                     }).catch(console.error);
             } else { runToggle(); }
         }
@@ -1078,13 +1089,10 @@
                         });
                         newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); 
                         
-                        // 💡 타격감: 합성 시 살짝 위로 통통 튀어오름
                         Matter.Body.setVelocity(newBody, { x: 0, y: -2.5 });
                         Composite.add(world, newBody); 
                         
-                        // 💡 타격감: 시각적 빛 파티클 효과 및 흔들림
                         createMergeEffect(midX, midY, nextLevel);
-                        
                         triggerBattle();
                     }, 50);
                 }
