@@ -14,7 +14,7 @@
             display: flex; justify-content: center; align-items: center; 
             height: 100dvh; width: 100vw; overflow: hidden;
             color: #4a4e69; 
-            overscroll-behavior-y: none; /* 모바일 새로고침 당기기 방지 */
+            overscroll-behavior-y: none;
         }
         #app {
             width: 100%; max-width: 420px; height: 100dvh; 
@@ -26,7 +26,6 @@
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
 
-        /* 💡 애니메이션 모음 */
         @keyframes shakeScreen {
             0% { transform: translate(2px, 2px) rotate(0deg); }
             20% { transform: translate(-3px, -2px) rotate(-1deg); }
@@ -76,11 +75,9 @@
             display: none; flex-direction: column; background: #fdfbf7; overflow: hidden; 
         }
         .view-container.active { display: flex; }
-        
-        /* 💡 홈(게임화면)은 드래그 터치 스크롤 방지 */
         #view-home { background: transparent; touch-action: none; }
 
-        /* ================= [ 뷰 1: 홈 (게임 전투 씬) ] ================= */
+        /* ================= [ 뷰 1: 홈 ] ================= */
         #board-section {
             flex-shrink: 0; height: 145px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
             display: flex; justify-content: center; align-items: center; padding: 5px 10px; z-index: 10;
@@ -131,7 +128,6 @@
 
         #wipeout-anim { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 150px; z-index: 100; filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); pointer-events: none; }
 
-        /* 하단 게임 UI */
         #ui-section {
             flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10;
         }
@@ -151,18 +147,16 @@
         .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-        /* ================= [ 제네릭 뷰 스타일 (공통) ] ================= */
+        /* ================= [ 제네릭 뷰 스타일 ] ================= */
         .view-title { 
             background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; 
             box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10;
         }
-        /* 💡 각 콘텐츠 컨테이너에 스크롤을 활성화합니다 */
         .view-content { 
             padding: 20px; text-align: center; flex: 1; 
             overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 30px;
         }
 
-        /* ================= [ 설정 뷰 ] ================= */
         .settings-section { background: #fff; border: 2px solid #e8dff5; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
         .section-title { font-size: 14px; font-weight: 800; color: #b9a0e6; border-bottom: 2px dashed #e8dff5; padding-bottom: 8px; margin-bottom: 10px; text-align: left; }
         .showroom-btn { 
@@ -171,7 +165,6 @@
         }
         .showroom-btn:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
 
-        /* ================= [ 합성 순서 변경 뷰 ] ================= */
         .merge-item {
             background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; 
             display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor: pointer; transition: all 0.1s; position: relative;
@@ -181,7 +174,6 @@
             position: absolute; top: -8px; left: -8px; background: #b9a0e6; color: white; font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        /* 기타 뷰 스타일 (캐릭터, 상점, 마이룸, 앨범) */
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
         .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
@@ -243,6 +235,24 @@
         .nav-item.active { color: #d81b60; }
         .nav-item.active .icon { transform: translateY(-3px) scale(1.1); filter: grayscale(0); opacity: 1; }
 
+        /* ================= [ 💡 간식서리 미니게임 전용 스타일 ] ================= */
+        #minigame-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 4000; display: none;
+            flex-direction: column; justify-content: center; align-items: center; color: #fff; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .memory-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 320px; margin-top: 20px;
+        }
+        .memory-card {
+            aspect-ratio: 1; background: #b9a0e6; border-radius: 12px; font-size: 28px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            box-shadow: 0 4px 0 #8e7cc3; transition: transform 0.1s; user-select: none;
+        }
+        .memory-card:active { transform: scale(0.95); }
+        .memory-card.flipped { background: #fff; box-shadow: 0 4px 0 #ddd; }
+
         .floating-text {
             position: absolute; font-weight: bold; font-size: 18px; color: #fff; 
             text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69; pointer-events: none; z-index: 100; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center;
@@ -259,13 +269,14 @@
 <div id="app">
     <!-- 상단 바 -->
     <div id="top-bar">
+        <!-- 💡 왼쪽 상단 프로필 클릭 시 설정-프로필 변경 창과 동일하게 연동 -->
         <div class="profile-pic" id="top-profile-pic" onclick="openSettings()">👩</div>
         <div class="top-stats">
             <div class="stat-badge" id="energy-badge">
                 <div>⚡ <span id="val-energy">50 / 50</span></div>
                 <div id="recharge-info">⏳ 15s (+10)</div>
             </div>
-            <div class="stat-badge">🪙 <span id="val-gold">0</span></div>
+            <div class="stat-badge">🪙 <span id="val-gold">10,000</span></div>
             <div class="stat-badge" id="shield-badge" style="gap:2px;"></div>
         </div>
         <div class="settings-btn" onclick="openSettings()">⚙️</div>
@@ -441,6 +452,13 @@
         <div class="nav-item" id="nav-album" onclick="switchMenu('album')"><div class="icon">📖</div><div>앨범</div></div>
     </div>
 
+    <!-- 💡 간식서리 미니게임 오버레이 (신규) -->
+    <div id="minigame-overlay">
+        <div style="font-size: 24px; font-weight: bold; color: #f6e58d;">🥨 간식서리 이벤트! 🥨</div>
+        <div style="font-size: 13px; color: #ddd; margin-top: 5px; text-align: center;">같은 음식/간식 3개를 맞추면 보상 획득!</div>
+        <div class="memory-grid" id="memory-grid"></div>
+    </div>
+
     <!-- 프로필 이미지 선택 오버레이 -->
     <div id="overlay-profile-select" class="overlay" style="background:rgba(0,0,0,0.7); z-index: 3000;">
         <div style="background:#fff; width:90%; border-radius:16px; padding:20px; text-align:center;">
@@ -460,7 +478,7 @@
 </div>
 
 <script>
-    // 전역 상태 변수 (테스트용 골드 10000 지급)
+    // 전역 상태 변수
     let energy = 50; 
     let gold = 10000; 
     let shields = 4;
@@ -520,7 +538,7 @@
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
 
-    // 💡 구슬 데이터
+    // 구슬 데이터
     const baseImgSize = 256;
     let LEVELS = [
         { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
@@ -531,7 +549,6 @@
         { radius: 125, img: 'images/lv11.png' }, { radius: 145, img: 'images/lv12.png' }
     ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
-    // 💡 합성 순서 관련 변수
     let tempImgs = [];
     let tempOwned = [];
     let tempEmojis = [];
@@ -572,7 +589,7 @@
         }
     }, 1000);
 
-    // ================= [ 설정 및 순서변경 (신규) ] =================
+    // ================= [ 설정 및 프로필 변경 스크립트 ] =================
     window.openSettings = function() {
         previousMenu = currentMenu;
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
@@ -626,7 +643,7 @@
         });
     }
 
-    // 💡 합성 순서 Swap 시스템
+    // ================= [ 합성 순서 변경 스크립트 ] =================
     window.openMergeOrder = function() {
         tempImgs = LEVELS.map(l => l.img);
         tempOwned = [...roomItemsOwned];
@@ -813,6 +830,121 @@
         });
     }
 
+    // ================= [ 💡 간식서리 미니게임 스크립트 (신규) ] =================
+    const SNACK_EMOJIS = ['🍰', '🍕', '🍿', '🍔', '🍩', '🍫', '🍪', '🍬'];
+    let firstCard = null;
+    let lockBoard = false;
+    let matchedPairs = 0;
+    let earnedRewardGold = 0;
+
+    function triggerSnackHeistEvent() {
+        isBattling = true;
+        const overlay = document.getElementById('minigame-overlay');
+        const grid = document.getElementById('memory-grid');
+        grid.innerHTML = '';
+        overlay.style.display = 'flex';
+
+        // 8종 중 2종을 골라 각각 3장씩 배치하여 총 6장, 나머지는 짝 없는 함정카드 등으로 16장 구성 가능하나
+        // 룰: "같은 음식/간식 3개가 나오면" -> 3장씩 짝을 맞추는 4x4 (총 16장 = 3장짜리 3세트 + 1장 남음? 아니면 3장씩 5세트=15장?)
+        // 깔끔하게 최고(200)=🍰(3장), 중간(150)=🍕(3장), 최소(100)=🍿(3장), 그리고 일반 이모지들로 구성
+        
+        let cardEmojis = [
+            '🍰', '🍰', '🍰', // 최고 (200)
+            '🍕', '🍕', '🍕', // 중간 (150)
+            '🍿', '🍿', '🍿', // 최소 (100)
+            '🍔', '🍔', '🍔', // 꽝 또는 보조
+            '🍩', '🍩', '🍩',
+            '🍫'             // 16개 채우기용
+        ];
+        
+        // 셔플
+        cardEmojis.sort(() => Math.random() - 0.5);
+
+        firstCard = null;
+        lockBoard = false;
+        matchedPairs = 0;
+        earnedRewardGold = 0;
+
+        cardEmojis.forEach((emoji, idx) => {
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            card.dataset.emoji = emoji;
+            card.innerText = '❓';
+            card.onclick = () => flipCard(card);
+            grid.appendChild(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (lockBoard) return;
+        if (card.classList.contains('flipped')) return;
+
+        card.classList.add('flipped');
+        card.innerText = card.dataset.emoji;
+
+        if (!firstCard) {
+            firstCard = card;
+            return;
+        }
+
+        const secondCard = card;
+        
+        // 3장을 맞추는 규칙이므로, 현재 선택한 카드가 이전 카드들과 같은지 체크
+        // 편의상 2장 연속 뒤집기에서 같은 이모지 2장이 모이면 일치 판정 후 3장째를 찾는 방식 또는
+        // 클릭한 카드들을 기억해 두는 심플 매칭 게임으로 구현합니다.
+        // 여기서는 유저분 요청("같은 음식, 간식 3개가 나오면 그것에 맞게 골드 지급")에 맞춰
+        // 뒤집은 카드들의 이모지가 일치하는지 판정합니다.
+        
+        if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+            // 2장이 맞았음. 3장째를 찾게 유도하거나 이미 3장이 모였는지 확인
+            checkThreeMatch(firstCard.dataset.emoji);
+        } else {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                firstCard.innerText = '❓';
+                secondCard.classList.remove('flipped');
+                secondCard.innerText = '❓';
+                firstCard = null;
+                lockBoard = false;
+            }, 800);
+        }
+    }
+
+    function checkThreeMatch(emoji) {
+        // 화면에서 현재 열린 이모지가 해당 이모지인 카드들을 찾음
+        const flippedCards = Array.from(document.querySelectorAll('.memory-card.flipped')).filter(c => c.innerText === emoji && !c.classList.contains('matched'));
+        
+        if (flippedCards.length === 3) {
+            flippedCards.forEach(c => c.classList.add('matched'));
+            firstCard = null;
+
+            // 보상 산정
+            let baseReward = 0;
+            if (emoji === '🍰') baseReward = 200; // 최고
+            else if (emoji === '🍕') baseReward = 150; // 중간
+            else if (emoji === '🍿') baseReward = 100; // 최소
+            else baseReward = 50; // 기타
+
+            earnedRewardGold += baseReward * multiplier;
+            showFloatingText(`간식서리 성공! +${baseReward * multiplier} 🪙`, window.innerWidth/2 - 80, window.innerHeight/2, "#f6e58d");
+
+            // 모든 3장 세트(🍰, 🍕, 🍿)를 찾았거나 게임 종료 조건 검사
+            // 여기서는 🍰, 🍕, 🍿 중 하나라도 3개를 맞추면 즉시 성공 보상을 주고 게임 종료하도록 심플하게 구성합니다!
+            if (emoji === '🍰' || emoji === '🍕' || emoji === '🍿') {
+                setTimeout(() => {
+                    gold += earnedRewardGold;
+                    updateEnergyUI();
+                    document.getElementById('minigame-overlay').style.display = 'none';
+                    isBattling = false;
+                    showFloatingText(`간식서리 보상 획득 완료! 🪙`, window.innerWidth/2 - 90, window.innerHeight/2, "#f6e58d");
+                }, 1000);
+            }
+        } else {
+            firstCard = null;
+        }
+    }
+
     // ================= [ 타격감 및 전투 ] =================
     function createMergeEffect(x, y, level) {
         const effect = document.createElement('div');
@@ -865,6 +997,14 @@
                 let rewardText = ""; let rewardColor = "#fff";
                 const rect = enemyEl.getBoundingClientRect();
                 const feverMult = isFeverMode ? 2 : 1;
+
+                // 💡 1/12 확률로 간식서리 이벤트 발동!
+                if (rand === 11) {
+                    enemyEl.className = 'character enemy';
+                    isBattling = false;
+                    triggerSnackHeistEvent();
+                    return;
+                }
 
                 if (rand === 0) { 
                     if (shields > 0) { shields -= 1; rewardText = `방어! -1 🐶`; rewardColor = "#ff7675"; } 
@@ -927,7 +1067,7 @@
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
         
-        // 💡 바닥 완벽 대응 (height + 50)
+        // 💡 유동적 바닥 높이 설정 (height + 50)
         const floor = Bodies.rectangle(width / 2, height + 50, width * 3, 100, wallOptions);
         const leftWall = Bodies.rectangle(-50, height / 2, 100, height * 5, wallOptions);
         const rightWall = Bodies.rectangle(width + 50, height / 2, 100, height * 5, wallOptions);
@@ -935,7 +1075,6 @@
         
         Composite.add(world, [floor, leftWall, rightWall, ceiling]);
 
-        // 💡 물리 바디 새로고침 (순서 교체 시)
         window.refreshActiveBodies = function() {
             const bodies = Composite.allBodies(world).filter(b => b.level !== undefined);
             bodies.forEach(b => {
@@ -943,7 +1082,6 @@
             });
         };
 
-        // 💡 화면 리사이즈 시 동기화
         window.addEventListener('resize', () => {
             width = gameSection.clientWidth; height = gameSection.clientHeight;
             render.canvas.width = width * window.devicePixelRatio; render.canvas.height = height * window.devicePixelRatio;
