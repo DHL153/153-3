@@ -350,7 +350,7 @@
             </div>
         </div>
 
-        <!-- 뷰 2: 캐릭터 도감 -->
+        <!-- 뷰 2 ~ 7 (생략 없이 원본 유지) -->
         <div id="view-character" class="view-container">
             <div class="view-title">도감 - 전체 캐릭터</div>
             <div class="view-content">
@@ -359,7 +359,6 @@
             </div>
         </div>
 
-        <!-- 뷰 3: 상점 -->
         <div id="view-shop" class="view-container">
             <div class="view-title">상점</div>
             <div class="view-content" style="display:block; text-align: left;">
@@ -386,7 +385,6 @@
             </div>
         </div>
 
-        <!-- 뷰 4: 마이룸 -->
         <div id="view-myroom" class="view-container">
             <div class="myroom-top" id="myroom-display"></div>
             <div class="myroom-bottom">
@@ -398,7 +396,6 @@
             </div>
         </div>
 
-        <!-- 뷰 5: 앨범 -->
         <div id="view-album" class="view-container">
             <div class="view-title">앨범</div>
             <div class="view-content" id="album-main">
@@ -418,7 +415,6 @@
             </div>
         </div>
 
-        <!-- 뷰 6: 설정 -->
         <div id="view-settings" class="view-container" style="z-index: 100;">
             <div class="view-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span onclick="closeSettings()" style="cursor:pointer; font-size:20px;">🔙</span>
@@ -450,7 +446,6 @@
             </div>
         </div>
 
-        <!-- 뷰 7: 합성 순서 변경 -->
         <div id="view-merge-order" class="view-container" style="z-index: 110;">
             <div class="view-title" style="display:flex; justify-content:space-between; align-items:center;">
                 <span onclick="closeMergeOrder()" style="cursor:pointer; font-size:14px;">취소</span>
@@ -475,7 +470,7 @@
         <div class="nav-item" id="nav-album" onclick="switchMenu('album')"><div class="icon">📖</div><div>앨범</div></div>
     </div>
 
-    <!-- 💡 간식서리 미니게임 오버레이 수정됨 -->
+    <!-- 간식서리 미니게임 오버레이 -->
     <div id="minigame-overlay">
         <div style="font-size: 24px; font-weight: bold; color: #f6e58d;">🥨 간식서리 이벤트! 🥨</div>
         <div style="font-size: 13px; color: #ddd; margin-top: 5px; text-align: center;">같은 간식을 3개 맞추면 보상 획득!<br><span style="color:#ff7675; font-weight:bold;">(❌ 3번 나오면 꽝!)</span></div>
@@ -486,10 +481,13 @@
             <div class="reward-item" id="reward-🍿"><div class="emoji">🍿</div><div class="gold">100🪙</div><div class="count" id="count-🍿">0/3</div></div>
             <div class="reward-item" id="reward-❌"><div class="emoji">❌</div><div class="gold" style="color:#ff7675;">꽝</div><div class="count" id="count-❌">0/3</div></div>
         </div>
-
         <div class="memory-grid" id="memory-grid"></div>
     </div>
     <div id="minigame-result"></div>
+
+    <!-- 💡 전투 중 발생하는 알림/잠시멈춤 전용 오버레이 (새로 추가됨) -->
+    <div id="event-overlay" class="overlay" style="background:rgba(0,0,0,0.6); z-index:4500; display:none;"></div>
+    <div id="event-result" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); flex-direction:column; align-items:center; justify-content:center; width:100%; z-index:5000; text-align:center; color:white; display:none;"></div>
 
     <!-- 프로필 이미지 선택 오버레이 -->
     <div id="overlay-profile-select" class="overlay" style="background:rgba(0,0,0,0.7); z-index: 3000;">
@@ -559,6 +557,7 @@
     // 전투 및 미니게임 진행 상태 락(Lock)
     let isBattling = false;
     let isMinigameActive = false;
+    let isEventPause = false; // 💡 이벤트 발생 시 모든 행동과 엔진을 정지시키는 락
 
     const multList = [1, 2, 5, 10];
     let multIndex = 0;
@@ -678,7 +677,7 @@
         });
     }
 
-    // ================= [ 💡 간식서리 미니게임 스크립트 ] =================
+    // ================= [ 간식서리 미니게임 스크립트 ] =================
     let lockBoard = false;
     let foundCounts = {};
 
@@ -727,7 +726,7 @@
         document.getElementById('minigame-result').className = '';
         overlay.style.display = 'flex';
 
-        // 16장 덱 (요구사항: 🍰3, 🍕3, 🍿3, ❌7)
+        // 16장 덱
         let cardEmojis = [
             '🍰', '🍰', '🍰', 
             '🍕', '🍕', '🍕', 
@@ -791,7 +790,7 @@
             resultEl.style.display = 'flex';
             resultEl.className = 'pop-zoom';
             
-            // 폭죽 (이모지 흩뿌리기 효과)
+            // 폭죽
             for(let i=0; i<15; i++) {
                 setTimeout(() => {
                     const conf = document.createElement('div');
@@ -828,12 +827,10 @@
         document.getElementById('view-settings').classList.remove('active');
         document.getElementById('view-merge-order').classList.add('active');
     }
-
     window.closeMergeOrder = function() {
         document.getElementById('view-merge-order').classList.remove('active');
         document.getElementById('view-settings').classList.add('active');
     }
-
     function renderMergeOrderGrid() {
         const grid = document.getElementById('merge-order-grid');
         grid.innerHTML = '';
@@ -849,7 +846,6 @@
             grid.appendChild(item);
         });
     }
-
     function handleMergeItemClick(i) {
         if (selectedMergeIndex === -1) {
             selectedMergeIndex = i; 
@@ -872,22 +868,14 @@
         }
         renderMergeOrderGrid();
     }
-
     window.saveMergeOrder = function() {
-        for(let i=0; i < LEVELS.length; i++) {
-            LEVELS[i].img = tempImgs[i];
-        }
+        for(let i=0; i < LEVELS.length; i++) { LEVELS[i].img = tempImgs[i]; }
         roomItemsOwned = [...tempOwned];
         ROOM_EMOJIS.splice(0, ROOM_EMOJIS.length, ...tempEmojis);
         
-        updatePreview();
-        renderCharacterGrid();
-        renderMyRoom();
-        
+        updatePreview(); renderCharacterGrid(); renderMyRoom();
         if (window.refreshActiveBodies) window.refreshActiveBodies();
-
-        closeMergeOrder();
-        showFloatingText("저장되었습니다! ✅", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
+        closeMergeOrder(); showFloatingText("저장되었습니다! ✅", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
     }
 
     // ================= [ 상점 스크립트 ] =================
@@ -898,17 +886,13 @@
         btn.disabled = true; btn.innerHTML = "✅ 보상 획득 완료";
         showFloatingText("일일 보상 획득! 🎁", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
     }
-
     window.buyEnergy = function(amount, cost) {
         if (gold < cost) { showFloatingText("골드가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
-        gold -= cost; energy += amount; updateEnergyUI();
-        showFloatingText(`에너지 +${amount} ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
+        gold -= cost; energy += amount; updateEnergyUI(); showFloatingText(`에너지 +${amount} ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
     }
-
     window.buyGold = function(amount, cost) {
         if (energy < cost) { showFloatingText("에너지가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
-        energy -= cost; gold += amount; updateEnergyUI();
-        showFloatingText(`골드 +${amount} 🪙`, window.innerWidth/2 - 50, window.innerHeight/2, "#f6e58d");
+        energy -= cost; gold += amount; updateEnergyUI(); showFloatingText(`골드 +${amount} 🪙`, window.innerWidth/2 - 50, window.innerHeight/2, "#f6e58d");
     }
 
     // ================= [ 마이룸 및 앨범 스크립트 ] =================
@@ -916,106 +900,71 @@
         const display = document.getElementById('myroom-display');
         display.innerHTML = '<div class="myroom-top-title">내 방 꾸미기</div>';
         const grid = document.getElementById('myroom-grid');
-        grid.innerHTML = '';
-        document.getElementById('next-item-cost').innerText = nextRoomCost.toLocaleString();
+        grid.innerHTML = ''; document.getElementById('next-item-cost').innerText = nextRoomCost.toLocaleString();
 
         ROOM_EMOJIS.forEach((emoji, i) => {
             if(roomItemsOwned[i]) {
-                const pos = roomPositions[i];
-                const el = document.createElement('div');
+                const pos = roomPositions[i]; const el = document.createElement('div');
                 el.style.cssText = `position:absolute; left:${pos.left}; top:${pos.top}; z-index:${pos.z}; font-size:45px; transform:translate(-50%, -50%); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));`;
-                el.innerText = emoji;
-                display.appendChild(el);
+                el.innerText = emoji; display.appendChild(el);
             }
             const item = document.createElement('div');
             if(roomItemsOwned[i]) {
-                item.className = 'room-shop-item owned';
-                item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status">✅ 배치 완료</div>`;
+                item.className = 'room-shop-item owned'; item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status">✅ 배치 완료</div>`;
             } else {
-                item.className = 'room-shop-item';
-                item.onclick = () => buyRoomItem(i);
-                item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status cost">${nextRoomCost.toLocaleString()} 🪙</div>`;
+                item.className = 'room-shop-item'; item.onclick = () => buyRoomItem(i); item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status cost">${nextRoomCost.toLocaleString()} 🪙</div>`;
             }
             grid.appendChild(item);
         });
     }
-
     window.buyRoomItem = function(index) {
         if (roomItemsOwned[index]) return; 
         if (gold < nextRoomCost) { showFloatingText("골드가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
-        gold -= nextRoomCost; updateEnergyUI();
-        roomItemsOwned[index] = true; nextRoomCost = Math.floor(nextRoomCost * 1.5);
-        showFloatingText("구매 완료! 🎉", window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
-        renderMyRoom();
+        gold -= nextRoomCost; updateEnergyUI(); roomItemsOwned[index] = true; nextRoomCost = Math.floor(nextRoomCost * 1.5);
+        showFloatingText("구매 완료! 🎉", window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1"); renderMyRoom();
     }
 
     window.openAlbum = function(category) {
         if (category === 'animal') {
-            document.getElementById('album-main').style.display = 'none';
-            document.getElementById('album-sub').style.display = 'block';
-            const grid = document.getElementById('album-grid-container');
-            grid.innerHTML = '';
+            document.getElementById('album-main').style.display = 'none'; document.getElementById('album-sub').style.display = 'block';
+            const grid = document.getElementById('album-grid-container'); grid.innerHTML = '';
             LEVELS.forEach((lv, index) => {
-                const item = document.createElement('div');
-                item.className = 'char-item';
-                item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`;
-                grid.appendChild(item);
+                const item = document.createElement('div'); item.className = 'char-item';
+                item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`; grid.appendChild(item);
             });
-        } else {
-            showFloatingText("아직 준비 중입니다! 🛠️", window.innerWidth/2 - 80, window.innerHeight/2, "#ff7675");
-        }
+        } else { showFloatingText("아직 준비 중입니다! 🛠️", window.innerWidth/2 - 80, window.innerHeight/2, "#ff7675"); }
     }
-
-    window.closeAlbum = function() {
-        document.getElementById('album-main').style.display = 'block';
-        document.getElementById('album-sub').style.display = 'none';
-    }
+    window.closeAlbum = function() { document.getElementById('album-main').style.display = 'block'; document.getElementById('album-sub').style.display = 'none'; }
 
     // ================= [ 네비게이션 ] =================
     window.toggleMultiplier = function() {
-        multIndex = (multIndex + 1) % multList.length;
-        multiplier = multList[multIndex];
-        document.getElementById('mult-label').innerText = 'x' + multiplier;
-        const btn = document.getElementById('btn-mult');
-        btn.style.transform = 'translateY(4px)';
-        setTimeout(() => btn.style.transform = 'translateY(0)', 100);
+        multIndex = (multIndex + 1) % multList.length; multiplier = multList[multIndex]; document.getElementById('mult-label').innerText = 'x' + multiplier;
+        const btn = document.getElementById('btn-mult'); btn.style.transform = 'translateY(4px)'; setTimeout(() => btn.style.transform = 'translateY(0)', 100);
         uiEnergy.parentElement.style.color = '#ff70a6'; setTimeout(() => uiEnergy.parentElement.style.color = '', 200);
     }
 
     window.switchMenu = function(menuId) {
         currentMenu = menuId;
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        document.getElementById('view-' + menuId).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('nav-' + menuId).classList.add('active');
-
-        if (menuId === 'album') closeAlbum();
-        if (menuId === 'character') renderCharacterGrid();
-        if (menuId === 'myroom') renderMyRoom();
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.getElementById('view-' + menuId).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); document.getElementById('nav-' + menuId).classList.add('active');
+        if (menuId === 'album') closeAlbum(); if (menuId === 'character') renderCharacterGrid(); if (menuId === 'myroom') renderMyRoom();
     }
 
     function renderCharacterGrid() {
-        const grid = document.getElementById('char-grid-container');
-        grid.innerHTML = ''; 
+        const grid = document.getElementById('char-grid-container'); grid.innerHTML = ''; 
         LEVELS.forEach((lv, index) => {
-            const item = document.createElement('div');
-            item.className = 'char-item';
-            item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`;
-            grid.appendChild(item);
+            const item = document.createElement('div'); item.className = 'char-item';
+            item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`; grid.appendChild(item);
         });
     }
 
     // ================= [ 타격감 및 전투 시스템 ] =================
     function createMergeEffect(x, y, level) {
-        const effect = document.createElement('div');
-        effect.style.position = 'absolute'; effect.style.left = x + 'px'; effect.style.top = y + 'px';
-        const size = 30 + (level * 10);
-        effect.style.width = size + 'px'; effect.style.height = size + 'px';
+        const effect = document.createElement('div'); effect.style.position = 'absolute'; effect.style.left = x + 'px'; effect.style.top = y + 'px';
+        const size = 30 + (level * 10); effect.style.width = size + 'px'; effect.style.height = size + 'px';
         effect.style.transform = 'translate(-50%, -50%)'; effect.style.background = 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0) 70%)';
         effect.style.borderRadius = '50%'; effect.style.pointerEvents = 'none'; effect.style.zIndex = '15'; effect.style.animation = 'popEffect 0.3s ease-out forwards';
-        document.getElementById('game-section').appendChild(effect);
-        setTimeout(() => effect.remove(), 300);
-
+        document.getElementById('game-section').appendChild(effect); setTimeout(() => effect.remove(), 300);
         if (level >= 4) { appContainer.classList.add('merge-shake'); setTimeout(() => appContainer.classList.remove('merge-shake'), 150); }
     }
 
@@ -1027,10 +976,8 @@
 
     function activateFeverMode() {
         if (isFeverMode) return;
-        isFeverMode = true; feverTime = 10; feverBanner.style.display = 'block';
-        feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
+        isFeverMode = true; feverTime = 10; feverBanner.style.display = 'block'; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
         document.getElementById('battle-stage').style.boxShadow = "0 0 20px #f6e58d, inset 0 4px 10px rgba(0,0,0,0.05)";
-
         const originHero = heroEl.innerText; heroEl.innerText = '🤩'; heroEl.classList.add('happy');
         setTimeout(() => { heroEl.innerText = originHero; heroEl.classList.remove('happy'); }, 2000);
 
@@ -1044,9 +991,37 @@
         }, 1000);
     }
 
-    // 💡 확률 재조정 로직 완벽 적용
+    // 💡 이벤트 일시정지 및 애니메이션 출력 함수
+    function showEventOverlay(emoji, htmlMsg, duration, color) {
+        isEventPause = true;
+        if (window.gameEngine) window.gameEngine.timing.timeScale = 0; // 물리 엔진 정지
+        
+        // 드롭 라인과 프리뷰 일시 숨김 처리
+        document.getElementById('drop-line').style.display = 'none';
+        document.getElementById('preview-ball').style.display = 'none';
+
+        const overlay = document.getElementById('event-overlay');
+        const resultEl = document.getElementById('event-result');
+        
+        resultEl.innerHTML = `
+            <div style="font-size:80px; margin-bottom:10px; line-height:1; animation: popZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">${emoji}</div>
+            <div style="font-size:20px; font-weight:900; color:${color}; text-shadow: 0 4px 10px rgba(0,0,0,0.5); padding: 0 15px;">${htmlMsg}</div>
+        `;
+        overlay.style.display = 'block';
+        resultEl.style.display = 'flex';
+        resultEl.className = 'pop-zoom';
+        
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            resultEl.style.display = 'none';
+            isEventPause = false;
+            if (window.gameEngine) window.gameEngine.timing.timeScale = 1; // 물리 엔진 재개
+            if (typeof updatePreview === 'function') updatePreview(); // 프리뷰 복구
+        }, duration);
+    }
+
     function triggerBattle() {
-        if (isBattling || isMinigameActive) return; 
+        if (isBattling || isMinigameActive || isEventPause) return; 
         isBattling = true;
 
         const enemies = ['🦇', '🦹‍♂️', '👾', '🧛', '🧟', '🐉', '🐲'];
@@ -1060,51 +1035,67 @@
                 enemyEl.className = 'character enemy explode';
                 if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
-                // 0~11 사이의 난수 생성 (총 12개 확률)
                 const rand = Math.floor(Math.random() * 12);
-                let rewardText = ""; let rewardColor = "#fff";
+                let rewardText = null; let rewardColor = "#fff";
                 const rect = enemyEl.getBoundingClientRect();
                 const feverMult = isFeverMode ? 2 : 1;
 
                 if (rand === 0) { 
-                    // 1/12 확률: 간식서리 미니게임
-                    enemyEl.className = 'character enemy';
-                    isBattling = false;
-                    triggerSnackHeistEvent();
-                    return;
+                    enemyEl.className = 'character enemy'; isBattling = false; triggerSnackHeistEvent(); return;
                 } else if (rand === 1) { 
-                    // 1/12 확률: 아무것도 하지 않음
                     rewardText = `처치! ⚔️`; rewardColor = "#fff"; 
                 } else if (rand === 2) { 
-                    // 1/12 확률: -1 방패 (고정 감소)
-                    if (shields > 0) { shields -= 1; rewardText = `방어! -1 🐶`; rewardColor = "#ff7675"; } 
-                    else { rewardText = `마이룸 피해! 💥`; rewardColor = "#ff7675"; }
+                    // 💡 1/12 확률: -1 방패 (고정 감소 또는 -50 골드) & 정지 이벤트
+                    let msg = "";
+                    if (shields > 0) { 
+                        shields -= 1; 
+                        msg = "방어가 뚫렸습니다...<br><span style='color:#ff7675'>방패 -1 🐶</span>"; 
+                    } else { 
+                        gold -= 50; if(gold < 0) gold = 0; 
+                        msg = "방패 소진! 마이룸 피해 발생<br><span style='color:#ff7675'>-50 🪙</span>"; 
+                    }
                     updateShieldUI();
+                    showEventOverlay("😭", msg, 2000, "#ff7675");
                 } else if (rand === 3) { 
-                    // 1/12 확률: +1 방패 (배수 영향)
+                    // 💡 1/12 확률: +1 방패 (배수 영향) & 정지 축하 이벤트
                     const gained = 1 * multiplier; let actualGained = 0; let overflow = 0;
                     if (shields + gained <= MAX_SHIELDS) { shields += gained; actualGained = gained; } 
                     else { actualGained = MAX_SHIELDS - shields; overflow = gained - actualGained; shields = MAX_SHIELDS; }
                     
+                    let extraMsg = "";
                     if (overflow > 0) {
                         const energyBonus = overflow * 10; energy += energyBonus; if (energy > 50) energy = 50;
-                        rewardText = `+${actualGained}🐶 초과 ⚡+${energyBonus}`; rewardColor = "#1dd1a1";
-                    } else { rewardText = `+${actualGained} 🐶`; rewardColor = "#b9f6ca"; }
+                        extraMsg = `<br><span style='font-size:14px; color:#1dd1a1;'>초과 보상: 에너지 +${energyBonus}⚡</span>`;
+                    }
                     updateShieldUI(); updateEnergyUI();
+                    
+                    let msg = `방패 획득!<br><span style='color:#b9f6ca'>+${actualGained} 🐶</span>${extraMsg}`;
+                    showEventOverlay("🎉", msg, 2000, "#b9f6ca");
                 } else if (rand >= 4 && rand <= 7) { 
-                    // 4/12 확률 (4,5,6,7): +100 골드
                     const amount = 100 * multiplier * feverMult; gold += amount; rewardText = `+${amount} 🪙`; rewardColor = "#f6e58d"; 
                 } else if (rand === 8 || rand === 9) { 
-                    // 2/12 확률 (8,9): -20 골드
                     const amount = 20 * multiplier; gold -= amount; if (gold < 0) gold = 0; rewardText = `-${amount} 🪙`; rewardColor = "#ff7675"; 
                 } else if (rand === 10 || rand === 11) { 
-                    // 2/12 확률 (10,11): +15 에너지
                     energy += 15; if (energy > 50) energy = 50; rewardText = `+15 ⚡`; rewardColor = "#b9f6ca"; updateEnergyUI(); 
                 }
                 
                 updateEnergyUI();
-                showFloatingText(rewardText, rect.left - 20, rect.top + 30, rewardColor);
-                setTimeout(() => { enemyEl.className = 'character enemy'; isBattling = false; }, 400);
+                
+                if (rewardText !== null) {
+                    showFloatingText(rewardText, rect.left - 20, rect.top + 30, rewardColor);
+                }
+
+                // 적 캐릭터는 0.4초 이펙트 후 제거
+                setTimeout(() => { 
+                    enemyEl.className = 'character enemy'; 
+                    if (rewardText !== null) isBattling = false; 
+                }, 400);
+
+                // 정지 이벤트가 발생한 경우 isBattling을 이벤트 종료 시간(2초)에 맞춰 해제
+                if (rewardText === null) {
+                    setTimeout(() => { isBattling = false; }, 2000);
+                }
+
             }, 150); 
         }, 200); 
     }
@@ -1130,6 +1121,9 @@
         const engine = Engine.create({ enableSleeping: false });
         const world = engine.world;
         
+        // 정지 제어를 위해 전역 할당
+        window.gameEngine = engine;
+        
         const render = Render.create({
             element: gameSection, engine: engine,
             options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
@@ -1138,8 +1132,6 @@
         Render.run(render); Runner.run(Runner.create(), engine);
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
-        
-        // 💡 물리 바닥의 높이를 200px 두께로 만들어 바닥선(Top edge)이 화면 가장 밑에 오차 없이 맞물리게 설정!
         const floor = Bodies.rectangle(width / 2, height + 100, width * 5, 200, wallOptions);
         const leftWall = Bodies.rectangle(-50, height / 2, 100, height * 5, wallOptions);
         const rightWall = Bodies.rectangle(width + 50, height / 2, 100, height * 5, wallOptions);
@@ -1149,12 +1141,9 @@
 
         window.refreshActiveBodies = function() {
             const bodies = Composite.allBodies(world).filter(b => b.level !== undefined);
-            bodies.forEach(b => {
-                b.render.sprite.texture = LEVELS[b.level].img;
-            });
+            bodies.forEach(b => { b.render.sprite.texture = LEVELS[b.level].img; });
         };
 
-        // 💡 주소창 등으로 인한 화면 리사이즈 감지 시, 바닥과 벽 좌표를 즉시 유동적으로 재계산하여 빈틈 방지
         window.addEventListener('resize', () => {
             width = gameSection.clientWidth; height = gameSection.clientHeight;
             render.canvas.width = width * window.devicePixelRatio; render.canvas.height = height * window.devicePixelRatio;
@@ -1168,7 +1157,7 @@
         window.addEventListener('deviceorientation', (event) => {
             let gamma = event.gamma || 0; let beta = event.beta || 0;
             if (!isTiltActive && !isAutoDrop) return;
-            if (currentMenu !== 'home' || isCrisis || isMinigameActive) return; 
+            if (currentMenu !== 'home' || isCrisis || isMinigameActive || isEventPause) return; 
             
             let adjustedBeta = beta - 45; const maxForce = 3; const sensitivity = 30;
             let forceX = (gamma / sensitivity) * maxForce; let forceY = (adjustedBeta / sensitivity) * maxForce;
@@ -1193,7 +1182,7 @@
         }
 
         Events.on(engine, 'afterUpdate', () => {
-            if (isGameOver || isCrisis || isMinigameActive) return;
+            if (isGameOver || isCrisis || isMinigameActive || isEventPause) return;
             const bodies = Composite.allBodies(world).filter(b => b.level !== undefined && !b.isStatic);
             let isOverflow = false; const now = Date.now();
             for (let b of bodies) {
@@ -1243,7 +1232,7 @@
         }
 
         window.useItem = function(itemType) {
-            if (isGameOver || isCrisis || isMinigameActive || currentMenu !== 'home') return;
+            if (isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'home') return;
             if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, window.innerHeight/2); return; }
             if (!consumeEnergy(itemCost)) return; 
             const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
@@ -1272,20 +1261,19 @@
 
         window.updatePreview = function() {
             const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
-            if (!isAutoDrop && currentMenu === 'home' && !isGameOver && !isCrisis && !isMinigameActive) previewImg.style.display = 'block';
+            if (!isAutoDrop && currentMenu === 'home' && !isGameOver && !isCrisis && !isMinigameActive && !isEventPause) previewImg.style.display = 'block';
             else previewImg.style.display = 'none';
         }
         updatePreview();
 
-        // 💡 미니게임 진행 중에는 드래그 막기
         gameSection.addEventListener('pointerdown', (e) => { 
-            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || isMinigameActive || !canDrop) return;
+            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return;
             const rect = gameSection.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
             dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
         });
 
         gameSection.addEventListener('pointermove', (e) => {
-            if(isGameOver || isCrisis || isAutoDrop || isMinigameActive || !canDrop || currentMenu !== 'home') return;
+            if(isGameOver || isCrisis || isAutoDrop || isMinigameActive || isEventPause || !canDrop || currentMenu !== 'home') return;
             const rect = gameSection.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
             dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
         });
@@ -1293,11 +1281,11 @@
         gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; });
 
         gameSection.addEventListener('pointerup', (e) => { 
-            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || isMinigameActive || !canDrop) return; executeDrop(lastMouseX); 
+            if (isAutoDrop || currentMenu !== 'home' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return; executeDrop(lastMouseX); 
         });
 
         function executeDrop(xPos) {
-            if (!canDrop || isGameOver || isCrisis || isMinigameActive || currentMenu !== 'home') return;
+            if (!canDrop || isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'home') return;
             const currentCost = 1 * multiplier; if (!consumeEnergy(currentCost, true)) return;
 
             const levelData = LEVELS[nextDropLevel]; const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
@@ -1316,7 +1304,7 @@
                 isAutoDrop = !isAutoDrop; const btnAuto = document.getElementById('btn-auto');
                 if (isAutoDrop) {
                     btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewImg.style.display = 'none'; dropLine.style.display = 'none';
-                    autoDropTimer = setInterval(() => { if (canDrop && !isGameOver && !isCrisis && !isMinigameActive && currentMenu === 'home') { executeDrop(Math.random() * width); } }, 600);
+                    autoDropTimer = setInterval(() => { if (canDrop && !isGameOver && !isCrisis && !isMinigameActive && !isEventPause && currentMenu === 'home') { executeDrop(Math.random() * width); } }, 600);
                     showFloatingText(`오토 & 틸트 ON! 🤖📱`, window.innerWidth/2 - 70, window.innerHeight/2);
                 } else {
                     btnAuto.classList.remove('active'); document.getElementById('auto-label').innerText = '오토: OFF'; clearInterval(autoDropTimer); updatePreview();
