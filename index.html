@@ -138,11 +138,11 @@
         .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-        /* ================= [ 제네릭 뷰 스타일 (상점, 캐릭터 등) ] ================= */
+        /* ================= [ 제네릭 뷰 스타일 (캐릭터, 상점 등) ] ================= */
         .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10;}
         .view-content { padding: 20px; text-align: center; flex: 1; overflow-y: auto; }
 
-        /* 캐릭터 그리드 */
+        /* 캐릭터 그리드 (도감 전용) */
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
         .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
@@ -162,7 +162,7 @@
         .shop-item .item-cost { font-size: 12px; font-weight: 800; background: #fdfbf7; padding: 4px 8px; border-radius: 10px; color: #d81b60; border: 1px solid #e8dff5; width: 95%; text-align: center;}
         .item-cost.gold-cost { color: #d35400; }
 
-        /* ================= [ 💡 마이룸 전용 스타일 (복구 및 개선) ] ================= */
+        /* ================= [ 💡 마이룸 전용 스타일 (이모지 기반으로 수정) ] ================= */
         #view-myroom { flex-direction: column; padding: 0; background: #fdfbf7; overflow: hidden; }
         .myroom-top {
             flex: 1; width: 100%; position: relative; overflow: hidden; min-height: 40%;
@@ -183,14 +183,14 @@
 
         .room-shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-bottom: 20px; }
         .room-shop-item {
-            background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor:pointer; transition:all 0.1s;
+            background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor:pointer; transition:all 0.1s;
         }
         .room-shop-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        .room-shop-item img { width: 45px; height: 45px; object-fit: contain; margin-bottom: 6px; }
+        .room-shop-item .emoji-icon { font-size: 35px; margin-bottom: 8px; line-height: 1; }
         .room-shop-item .status { font-size: 11px; font-weight: 800; background: #fdfbf7; padding: 4px 0; border-radius: 8px; border: 1px solid #e8dff5; width: 90%; text-align: center;}
         .room-shop-item .status.cost { color: #d35400; }
         
-        /* 구매 완료 아이템 흑백 & 마킹 스타일 */
+        /* 구매 완료 이모지 아이템 스타일 */
         .room-shop-item.owned { filter: grayscale(0.2); opacity: 0.8; cursor: default; }
         .room-shop-item.owned:active { transform: none; box-shadow: 0 4px 0 #e8dff5; }
         .room-shop-item.owned .status { background: #b8e994; color: #1b5e20; border-color: #78e08f; }
@@ -337,14 +337,14 @@
             </div>
         </div>
 
-        <!-- 💡 뷰 4: 마이룸 (정상 복구 및 개선 완료) -->
+        <!-- 💡 뷰 4: 마이룸 (이모지 리소스로 변경 완료) -->
         <div id="view-myroom" class="view-container">
             <div class="myroom-top" id="myroom-display">
-                <!-- 구매한 아이템들이 이 영역 안에 동적으로 배치됩니다 -->
+                <!-- 구매한 이모지 아이템들이 이 영역 안에 동적으로 배치됩니다 -->
             </div>
             <div class="myroom-bottom">
                 <div class="myroom-info">
-                    <div class="myroom-info-title">가구/캐릭터 상점</div>
+                    <div class="myroom-info-title">가구/소품 상점</div>
                     <div class="myroom-next-cost">다음 구매: <span id="next-item-cost">100</span> 💰</div>
                 </div>
                 <div class="room-shop-grid" id="myroom-grid">
@@ -404,9 +404,12 @@
 
     let isDailyClaimed = false; 
 
-    // 💡 마이룸 상태 관리 변수 (정상 복구)
-    let roomItemsOwned = new Array(12).fill(false); // 12개 아이템 보유 상태
+    // 💡 마이룸 상태 관리 변수 (이모지 12종)
+    let roomItemsOwned = new Array(12).fill(false);
     let nextRoomCost = 100; // 초기 첫 구매 비용: 100 골드
+    
+    // 💡 방 꾸미기용 이모지 배열 (12개)
+    const ROOM_EMOJIS = ['🪴', '🧸', '📚', '☕', '📺', '🎸', '🕹️', '🐈', '🖼️', '🕰️', '🛋️', '🛏️'];
 
     // 방 내부의 예쁜 절대 좌표 (퍼센트)
     const roomPositions = [
@@ -518,9 +521,9 @@
         showFloatingText(`골드 +${amount} 💰`, window.innerWidth/2 - 50, window.innerHeight/2, "#f6e58d");
     }
 
-    // ================= [ 💡 마이룸 스크립트 (정상 작동) ] =================
+    // ================= [ 💡 마이룸 스크립트 (이모지 기반 업데이트) ] =================
     function renderMyRoom() {
-        // 상단 렌더링 (방과 배치된 아이템)
+        // 상단 렌더링 (방과 배치된 이모지 가구들)
         const display = document.getElementById('myroom-display');
         display.innerHTML = '<div class="myroom-top-title">내 방 꾸미기</div>';
         
@@ -529,14 +532,14 @@
         grid.innerHTML = '';
         document.getElementById('next-item-cost').innerText = nextRoomCost.toLocaleString();
 
-        LEVELS.forEach((lv, i) => {
-            // 배치된 아이템 렌더링
+        ROOM_EMOJIS.forEach((emoji, i) => {
+            // 배치된 아이템 렌더링 (이모지 텍스트로 처리)
             if(roomItemsOwned[i]) {
                 const pos = roomPositions[i];
-                const img = document.createElement('img');
-                img.src = lv.img;
-                img.style.cssText = `position:absolute; left:${pos.left}; top:${pos.top}; z-index:${pos.z}; width:60px; transform:translate(-50%, -50%); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));`;
-                display.appendChild(img);
+                const el = document.createElement('div');
+                el.style.cssText = `position:absolute; left:${pos.left}; top:${pos.top}; z-index:${pos.z}; font-size:45px; transform:translate(-50%, -50%); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));`;
+                el.innerText = emoji;
+                display.appendChild(el);
             }
 
             // 상점 아이템 렌더링
@@ -544,12 +547,12 @@
             if(roomItemsOwned[i]) {
                 // 이미 구매한 아이템은 회색 처리
                 item.className = 'room-shop-item owned';
-                item.innerHTML = `<img src="${lv.img}"><div class="status">✅ 배치 완료</div>`;
+                item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status">✅ 배치 완료</div>`;
             } else {
                 // 아직 안 산 아이템은 다음 구매 가격 표시 (클릭 이벤트 바인딩)
                 item.className = 'room-shop-item';
                 item.onclick = () => buyRoomItem(i);
-                item.innerHTML = `<img src="${lv.img}"><div class="status cost">${nextRoomCost.toLocaleString()} 💰</div>`;
+                item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status cost">${nextRoomCost.toLocaleString()} 💰</div>`;
             }
             grid.appendChild(item);
         });
@@ -568,7 +571,7 @@
         updateEnergyUI();
         
         roomItemsOwned[index] = true; // 소유 처리
-        // 💡 다음 가격 1.5배 상승
+        // 다음 가격 1.5배 상승
         nextRoomCost = Math.floor(nextRoomCost * 1.5);
         
         showFloatingText("구매 완료! 🎉", window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
@@ -596,8 +599,8 @@
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-' + menuId).classList.add('active');
 
-        if (menuId === 'character') renderCharacterGrid();
-        if (menuId === 'myroom') renderMyRoom(); // 💡 마이룸 진입 시 화면 자동 생성
+        if (menuId === 'character') renderCharacterGrid(); // 도감은 캐릭터 이미지 그대로 사용
+        if (menuId === 'myroom') renderMyRoom(); // 마이룸 진입 시 이모지 가구 렌더링
     }
 
     function renderCharacterGrid() {
