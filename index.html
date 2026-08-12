@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>미소녀 수박게임 + RPG 에디션</title>
+    <title>미소녀 수박게임 + RPG 에디션 (무한 생존 릴레이)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; touch-action: none; }
@@ -23,6 +23,22 @@
         @media (min-width: 421px) {
             #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
         }
+
+        /* 💡 화면 전체 흔들림 (폭발 연출용) */
+        @keyframes shakeScreen {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+        .shake-active { animation: shakeScreen 0.5s ease-in-out; }
 
         /* ================= [ 상단 프로필/상태/설정 바 ] ================= */
         #top-bar {
@@ -57,13 +73,11 @@
         #view-home { background: transparent; overflow: hidden; touch-action: none; }
 
         /* ================= [ 뷰 1: 홈 (게임 전투 씬) ] ================= */
-        /* 💡 전투 구역의 높이를 기존 100px -> 145px 로 확대 */
         #board-section {
             flex-shrink: 0; height: 145px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
             display: flex; justify-content: center; align-items: center; padding: 5px 10px; z-index: 10;
         }
         
-        /* 💡 전투 배경 화면 높이 90px -> 135px (1.5배) 확대, 배경 패턴 비율도 1.5배 조정 */
         #battle-stage {
             width: 100%; height: 135px; background-color: #f1e9fb;
             background-image: 
@@ -74,11 +88,11 @@
         }
         @keyframes scrollBg { from { background-position: 0 0, 0 0; } to { background-position: -90px 0, 0 0; } }
 
-        /* 💡 캐릭터 폰트 크기 65px 유지, 바닥으로 떨어지지 않게 top 좌표 45px로 조절 */
         .character { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; }
         .hero { left: 35%; margin-left: -32px; transform: scaleX(-1); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
-        
         .hero.attack { transform: scaleX(-1) translateX(-60px) rotate(-20deg) scale(1.2); }
+        /* 💡 생존 기쁨 애니메이션 */
+        .hero.happy { transform: scaleX(-1) translateY(-20px) scale(1.3); }
         
         .enemy { right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
         .enemy.slide-in { right: 15%; opacity: 1; }
@@ -100,18 +114,28 @@
         #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
         #deadline-line { position: absolute; top: 45px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
         
+        /* 💡 피버 배너 (신규) */
+        #fever-banner {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: #f6e58d; color: #574b90; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(246, 229, 141, 0.6); display: none; z-index: 10; animation: pulseFever 0.4s infinite alternate;
+        }
+        @keyframes pulseFever { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.05); } }
+
         #warning-banner {
             position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 10; animation: pulse 0.5s infinite alternate;
         }
         @keyframes pulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.05); } }
 
+        /* 💡 거대 폭발 연출용 */
+        #wipeout-anim {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 150px; z-index: 100; filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8));
+        }
+
         /* ================= [ 게임 하단 UI (버튼 5개) ] ================= */
         #ui-section {
             flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10;
         }
-        
         .item-group { display: flex; justify-content: space-between; align-items: stretch; gap: 6px; }
-        
         .btn-item {
             flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 800; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: none;
         }
@@ -128,11 +152,9 @@
         .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-
         /* ================= [ 제네릭 뷰 스타일 (캐릭터, 상점 등) ] ================= */
         .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; }
         .view-content { padding: 20px; text-align: center; flex: 1; }
-
         .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
         .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
         .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
@@ -156,10 +178,6 @@
             text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69; pointer-events: none; z-index: 100; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center;
         }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
-        
-        .overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.85); color: #4a4e69; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 2000; display: none; backdrop-filter: blur(5px); }
-        .action-btn { margin-top:20px; padding: 12px 24px; font-size:16px; border-radius:12px; border:2px solid #fff; background:#ffb3c6; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 0 #f78fb3; transition: all 0.1s; }
-        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
     </style>
 </head>
 <body>
@@ -183,7 +201,6 @@
         <!-- 뷰 1: 홈 (게임 메인) -->
         <div id="view-home" class="view-container active">
             
-            <!-- 전투 배경(Stage) 1.5배 확대 뷰 -->
             <div id="board-section">
                 <div id="battle-stage">
                     <div id="hero" class="character hero">🤺</div>
@@ -192,8 +209,10 @@
             </div>
 
             <div id="game-section">
+                <div id="fever-banner">🔥 피버 모드! 에너지 소모 무료</div>
                 <div id="deadline-line"></div>
                 <div id="warning-banner">⚠️ 위험! 5.0초</div>
+                <div id="wipeout-anim">💥</div>
                 <div id="drop-line"></div>
                 <img id="preview-ball" src="" alt="preview">
             </div>
@@ -280,12 +299,6 @@
             <div class="icon">📖</div><div>앨범</div>
         </div>
     </div>
-
-    <div id="overlay-gameover" class="overlay">
-        <div style="font-size: 32px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">GAME OVER</div>
-        <div style="font-size: 16px; margin-bottom: 10px;">데드라인을 초과했습니다!</div>
-        <button class="action-btn" onclick="restartGame()">다시 시작</button>
-    </div>
 </div>
 
 <script>
@@ -293,15 +306,19 @@
     let energy = 50; 
     let gold = 0;
     let multiplier = 1;
-    let energyCostBase = 1; 
     let itemCost = 10; 
+    const ENTRY_COST = 30; // 💡 재입장 비용
     let currentMenu = 'home';
 
     const DEADLINE_Y = 45; 
-    let isGameOver = false;
+    let isGameOver = false; // 현재 판 멈춤 상태(터치 방지 등)
     let isWarning = false;
     let warningTimeRemaining = 5.0;
     let warningInterval = null;
+
+    let isFeverMode = false;
+    let feverTime = 0;
+    let feverInterval = null;
 
     let energyRechargeInterval = null;
     let energyTimeRemaining = 15;
@@ -312,16 +329,18 @@
     let autoDropTimer = null;
     let isBattling = false;
 
-    // 배수 버튼 순환 로직
     const multList = [1, 2, 5, 10];
     let multIndex = 0;
 
     const uiEnergy = document.getElementById('val-energy');
     const uiGold = document.getElementById('val-gold');
-    const overlayGameOver = document.getElementById('overlay-gameover');
     const warningBanner = document.getElementById('warning-banner');
+    const feverBanner = document.getElementById('fever-banner');
+    const heroEl = document.getElementById('hero');
+    const enemyEl = document.getElementById('enemy');
+    const wipeoutAnim = document.getElementById('wipeout-anim');
+    const appContainer = document.getElementById('app');
 
-    // 구슬 크기 약 15% 축소
     const baseImgSize = 256;
     const LEVELS = [
         { radius: 12, img: 'images/lv01.png' }, { radius: 18, img: 'images/lv02.png' },
@@ -366,10 +385,7 @@
         LEVELS.forEach((lv, index) => {
             const item = document.createElement('div');
             item.className = 'char-item';
-            item.innerHTML = `
-                <img src="${lv.img}" alt="Lv${index+1}">
-                <div class="char-lv">Lv.${index + 1}</div>
-            `;
+            item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`;
             grid.appendChild(item);
         });
     }
@@ -380,14 +396,39 @@
         document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
     }
 
+    // 💡 피버 모드 시스템 (위기 극복 시)
+    function activateFeverMode() {
+        if (isFeverMode) return;
+        isFeverMode = true;
+        feverTime = 10;
+        feverBanner.style.display = 'block';
+        feverBanner.innerText = `🔥 피버 모드! 에너지 소모 0 (${feverTime}s)`;
+        document.getElementById('board-section').style.boxShadow = "0 0 20px #f6e58d";
+
+        // 미소녀 기쁨 연출
+        const originHero = heroEl.innerText;
+        heroEl.innerText = '🤩';
+        heroEl.classList.add('happy');
+        setTimeout(() => { heroEl.innerText = originHero; heroEl.classList.remove('happy'); }, 1500);
+
+        feverInterval = setInterval(() => {
+            feverTime--;
+            feverBanner.innerText = `🔥 피버 모드! 에너지 소모 0 (${feverTime}s)`;
+            if (feverTime <= 0) {
+                clearInterval(feverInterval);
+                isFeverMode = false;
+                feverBanner.style.display = 'none';
+                document.getElementById('board-section').style.boxShadow = "";
+                showFloatingText("피버 종료", window.innerWidth/2 - 40, window.innerHeight/2, "#fff");
+            }
+        }, 1000);
+    }
+
     function triggerBattle() {
         if (isBattling) return; 
         isBattling = true;
 
         const enemies = ['🦇', '🦹‍♂️', '👾', '🧛', '🧟', '🐉', '🐲'];
-        const heroEl = document.getElementById('hero');
-        const enemyEl = document.getElementById('enemy');
-
         enemyEl.innerText = enemies[Math.floor(Math.random() * enemies.length)];
         enemyEl.className = 'character enemy slide-in';
 
@@ -417,7 +458,7 @@
                 }
                 
                 uiGold.innerText = gold; updateEnergyUI();
-                showFloatingText(rewardText, rect.left - 20, rect.top + 20, rewardColor);
+                showFloatingText(rewardText, rect.left - 20, rect.top + 30, rewardColor);
                 setTimeout(() => { enemyEl.className = 'character enemy'; isBattling = false; }, 400);
             }, 150); 
         }, 200); 
@@ -452,8 +493,11 @@
         }
     }
 
-    function consumeEnergy(amount) {
-        if (energy < amount && amount !== 100) { 
+    // 💡 isDrop 매개변수를 추가하여 피버 모드일 때 구슬 드롭 에너지를 면제합니다.
+    function consumeEnergy(amount, isDrop = false) {
+        if (isDrop && isFeverMode) return true; // 피버 모드 혜택
+
+        if (energy < amount) { 
             showFloatingText("에너지가 없습니다.", window.innerWidth/2 - 60, window.innerHeight/2 + 20, "#ff7675"); 
             if (isAutoDrop) toggleAutoDrop();
             return false; 
@@ -536,27 +580,71 @@
                 isWarning = true; warningTimeRemaining = 5.0; warningBanner.style.display = 'block';
                 warningInterval = setInterval(() => {
                     warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
-                    if (warningTimeRemaining <= 0) { clearInterval(warningInterval); triggerGameOver(); }
+                    if (warningTimeRemaining <= 0) { clearInterval(warningInterval); triggerWipeOut(); }
                 }, 100);
-            } else if (!isOverflow && isWarning) { isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; }
+            } else if (!isOverflow && isWarning) { 
+                // 💡 위기 극복 성공! (안전선 밑으로 내려감)
+                isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; 
+                activateFeverMode(); // 피버 발동
+            }
         });
 
-        function triggerGameOver() {
+        // 💡 0초 도달 시 폭발 릴레이 연출
+        function triggerWipeOut() {
             isGameOver = true; isWarning = false; warningBanner.style.display = 'none';
-            if(isAutoDrop) toggleAutoDrop(); overlayGameOver.style.display = 'flex';
+            if(isAutoDrop) toggleAutoDrop(); 
+
+            // 영웅 당황 표정
+            const originHero = heroEl.innerText;
+            heroEl.innerText = '😱';
+
+            // 1. 거대 폭탄 투하 애니메이션 및 화면 흔들림
+            wipeoutAnim.style.display = 'block';
+            appContainer.classList.add('shake-active');
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+
+            setTimeout(() => {
+                // 2. 화면 구슬 싹쓸이
+                const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); 
+                Composite.remove(world, bodies);
+                
+                wipeoutAnim.style.display = 'none';
+                appContainer.classList.remove('shake-active');
+                heroEl.innerText = originHero;
+
+                // 3. 재입장 시도
+                attemptAutoRestart();
+            }, 1000);
         }
 
-        window.restartGame = function() {
-            overlayGameOver.style.display = 'none';
-            const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
-            isGameOver = false; isTiltActive = false; engine.gravity.x = 0; engine.gravity.y = 1;
-            document.getElementById('btn-tilt').classList.remove('active'); 
-            document.getElementById('tilt-label').style.display = 'block'; 
-            document.getElementById('tilt-cost').style.display = 'block'; 
-            document.getElementById('tilt-timer').style.display = 'none';
-            
-            energy = 50; updateEnergyUI(); checkRecharge(); updatePreview();
-        };
+        // 💡 재입장 및 대기 로직
+        function attemptAutoRestart() {
+            if (energy >= ENTRY_COST) {
+                showFloatingText(`-${ENTRY_COST} ⚡ (재입장)`, window.innerWidth/2 - 50, window.innerHeight - 150, "#ff7675");
+                energy -= ENTRY_COST;
+                updateEnergyUI();
+                checkRecharge();
+
+                // 0.5초 텀을 주고 새 구슬 지급
+                setTimeout(() => {
+                    isGameOver = false; isTiltActive = false; engine.gravity.x = 0; engine.gravity.y = 1;
+                    document.getElementById('btn-tilt').classList.remove('active'); 
+                    document.getElementById('tilt-label').style.display = 'block'; 
+                    document.getElementById('tilt-cost').style.display = 'block'; 
+                    document.getElementById('tilt-timer').style.display = 'none';
+                    updatePreview();
+                }, 500);
+            } else {
+                // 에너지 부족으로 릴레이 대기
+                showFloatingText(`재입장 대기중... (${ENTRY_COST} ⚡ 필요)`, window.innerWidth/2 - 80, window.innerHeight/2, "#ff7675");
+                let waitInterval = setInterval(() => {
+                    if (energy >= ENTRY_COST) {
+                        clearInterval(waitInterval);
+                        attemptAutoRestart();
+                    }
+                }, 1000);
+            }
+        }
 
         window.useItem = function(itemType) {
             if (isGameOver || currentMenu !== 'home') return;
@@ -601,7 +689,7 @@
 
         window.updatePreview = function() {
             const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
-            if (!isAutoDrop && currentMenu === 'home') previewImg.style.display = 'block';
+            if (!isAutoDrop && currentMenu === 'home' && !isGameOver) previewImg.style.display = 'block';
             else previewImg.style.display = 'none';
         }
         updatePreview();
@@ -617,7 +705,8 @@
             if (!canDrop || isGameOver || currentMenu !== 'home') return;
             
             const currentCost = 1 * multiplier; 
-            if (!consumeEnergy(currentCost)) return;
+            // 💡 피버 모드일 땐 무료 드롭(true)으로 검사
+            if (!consumeEnergy(currentCost, true)) return;
 
             const levelData = LEVELS[nextDropLevel];
             const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
