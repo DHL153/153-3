@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TEST</title>
+    <title>미소녀 수박게임 + RPG 위기탈출 에디션</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; }
         
         body { 
             margin: 0; padding: 0; 
-            background: linear-gradient(135deg, #a0c4ff 0%, #c3aed6 50%, #ffcbf2 100%);
+            /* 전체 배경: 신규 배경들과 어울리는 소프트 퍼플 & 피치 그라데이션 */
+            background: linear-gradient(135deg, #a8c0ff 0%, #ecd4ff 50%, #ffe0cc 100%);
             display: flex; justify-content: center; align-items: center; 
             height: 100dvh; width: 100vw; overflow: hidden;
             color: #4a4e69; 
@@ -18,12 +19,12 @@
         }
         #app {
             width: 100%; max-width: 420px; height: 100dvh; 
-            background: rgba(255, 255, 255, 0.95); position: relative;
+            background: rgba(253, 251, 247, 0.95); position: relative;
             display: flex; flex-direction: column;
             box-shadow: 0 10px 30px rgba(185, 160, 230, 0.4); overflow: hidden;
         }
         @media (min-width: 421px) {
-            #app { height: 95vh; border: 4px solid #b9a0e6; border-radius: 16px; }
+            #app { height: 95vh; border: 4px solid #d2bce3; border-radius: 16px; }
         }
 
         @keyframes shakeScreen {
@@ -75,7 +76,6 @@
             display: none; flex-direction: column; background: #fdfbf7; overflow: hidden; 
         }
         .view-container.active { display: flex; }
-        #view-battle { background: transparent; touch-action: none; }
 
         /* ================= [ 뷰: 로비 ] ================= */
         #view-lobby {
@@ -113,25 +113,23 @@
             flex-shrink: 0; height: 145px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
             display: flex; justify-content: center; align-items: center; padding: 5px 10px; z-index: 10;
         }
+        
+        /* 💡 전투 스테이지: 100% 100%로 크롭(짤림) 방지 */
         #battle-stage {
-            width: 100%; height: 135px; background-color: #f1e9fb;
-            background-image: 
-                linear-gradient(90deg, rgba(255,255,255,0.7) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.7) 75%, transparent 75%, transparent),
-                linear-gradient(to top, #b9a0e6 0%, #b9a0e6 22px, transparent 22px);
-            background-size: 90px 100%, 100% 100%; border: 3px solid #b9a0e6; border-radius: 12px; position: relative; overflow: hidden;
-            animation: scrollBg 1.5s linear infinite; transition: box-shadow 0.3s;
+            width: 100%; height: 135px; background-color: #2c2c2c;
+            background: url('images/bg/bt/bt_bg01.png') center center / 100% 100% no-repeat;
+            border: 3px solid #b9a0e6; border-radius: 12px; position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
         }
         
-        /* 💡 적 캐릭터(기존 텍스트 이모지 유지) */
-        .character.enemy { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
+        .character.enemy { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
         .character.enemy.slide-in { right: 15%; opacity: 1; }
         .character.enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
 
-        /* 💡 커스텀 히어로 캐릭터 전용 CSS */
         .hero { 
             position: absolute; left: 15%; top: 25px; 
             height: 90px; width: auto; object-fit: contain;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); 
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); 
             transition: all 0.15s ease-out; z-index: 5;
         }
         .hero.attack { transform: translateX(50px) rotate(15deg) scale(1.2); }
@@ -143,21 +141,37 @@
             100% { transform: scale(2) rotate(15deg); opacity: 0; filter: blur(4px); } 
         }
 
+        /* 💡 구슬 머지 구역 배경 및 반응형 테두리 설정 */
         #game-section {
-            flex: 1; background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(220, 240, 255, 0.6));
-            position: relative; overflow: hidden; cursor: crosshair; touch-action: none;
+            flex: 1; 
+            background: url('images/bg/merge/merge_bg01.png') center bottom / 100% 100% no-repeat;
+            position: relative; overflow: hidden; touch-action: none; background-color: #fdfbf7;
         }
-        #game-section canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #game-section::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('images/bg/merge/merge_guide01.png') center bottom / 100% 100% no-repeat;
+            pointer-events: none; z-index: 10; /* 구슬보다 항상 위에 위치 */
+        }
+        
+        /* 💡 반응형 물리엔진 컨테이너 (테두리 침범 방지 유동값 적용) */
+        #physics-area {
+            position: absolute; 
+            /* 가이드 테두리의 상하좌우 두께 비율에 맞춰 동적으로 내부 크기 제한 */
+            top: 9%; bottom: 3%; left: 4%; right: 4%; 
+            z-index: 1; cursor: crosshair; overflow: hidden; border-radius: 8px;
+        }
+        #physics-area canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
         #preview-ball { position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; opacity: 0.9; display: none; }
         #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
         #deadline-line { position: absolute; top: 45px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
         
-        #fever-banner { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); background: #f6e58d; color: #574b90; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(246, 229, 141, 0.6); display: none; z-index: 10; animation: pulseFever 0.4s infinite alternate; white-space: nowrap; }
-        #warning-banner { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 10; animation: pulse 0.5s infinite alternate; }
+        #fever-banner { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); background: #f6e58d; color: #574b90; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(246, 229, 141, 0.6); display: none; z-index: 15; animation: pulseFever 0.4s infinite alternate; white-space: nowrap; }
+        #warning-banner { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 15; animation: pulse 0.5s infinite alternate; }
         #wipeout-anim { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 150px; z-index: 100; filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); pointer-events: none; }
 
-        #ui-section { flex-shrink: 0; background: #ffb3c6; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #b9a0e6; z-index: 10; }
+        /* UI 색상 웜톤 매칭 수정 */
+        #ui-section { flex-shrink: 0; background: #f9f0ff; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #d2bce3; z-index: 10; }
         .item-group { display: flex; justify-content: space-between; align-items: stretch; gap: 6px; }
         .btn-item { flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 800; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: none; }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
@@ -169,11 +183,11 @@
         .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; } 
         .btn-tilt { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
         .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); color: #fff;}
-        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #b9a0e6; transform: scale(1.05); margin: 0 2px;}
+        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #d2bce3; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
         /* ================= [ 제네릭 뷰 스타일 (공통) ] ================= */
-        .view-title { background: #b9a0e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10; }
+        .view-title { background: #cda8e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10; }
         .view-content { padding: 20px; text-align: center; flex: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 30px; }
 
         .settings-section { background: #fff; border: 2px solid #e8dff5; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
@@ -215,7 +229,7 @@
         .room-shop-item .status.cost { color: #d35400; }
         .room-shop-item.owned { filter: grayscale(0.2); opacity: 0.8; cursor: default; }
 
-        /* ================= [ 간식서리 미니게임 전용 UI 추가 ] ================= */
+        /* ================= [ 간식서리 미니게임 전용 UI ] ================= */
         #minigame-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 4000; display: none; flex-direction: column; justify-content: center; align-items: center; color: #fff; padding: 20px; backdrop-filter: blur(5px); }
         .reward-container { display: flex; gap: 8px; margin-top: 15px; width: 100%; max-width: 320px; justify-content: center; }
         .reward-item { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; align-items: center; font-size: 11px; filter: grayscale(1); opacity: 0.6; transition: all 0.3s ease; flex: 1; text-align: center; }
@@ -284,18 +298,20 @@
         <div id="view-battle" class="view-container">
             <div id="board-section">
                 <div id="battle-stage">
-                    <!-- 💡 새로운 배틀 캐릭터 출력부 적용 -->
                     <img id="hero" class="hero" src="images/character/battle/01_Idle.png" alt="Hero">
                     <div id="enemy" class="character enemy">🦇</div>
                 </div>
             </div>
+            <!-- 💡 유동적으로 축소되는 독립적인 물리엔진 영역 적용 -->
             <div id="game-section">
-                <div id="fever-banner">🔥 피버 모드! 에너지 소모 무료 (10s)</div>
-                <div id="deadline-line"></div>
-                <div id="warning-banner">⚠️ 위험! 5.0초</div>
-                <div id="wipeout-anim">💥</div>
-                <div id="drop-line"></div>
-                <img id="preview-ball" src="" alt="preview">
+                <div id="physics-area">
+                    <div id="fever-banner">🔥 피버 모드! 에너지 소모 무료 (10s)</div>
+                    <div id="deadline-line"></div>
+                    <div id="warning-banner">⚠️ 위험! 5.0초</div>
+                    <div id="wipeout-anim">💥</div>
+                    <div id="drop-line"></div>
+                    <img id="preview-ball" src="" alt="preview">
+                </div>
             </div>
             <div id="ui-section">                
                 <div class="item-group">
@@ -419,7 +435,7 @@
         </div>
     </div>
 
-    <!-- 💡 하단 공통 네비게이션 바 -->
+    <!-- 하단 공통 네비게이션 바 -->
     <div id="bottom-nav">
         <div class="nav-item" id="nav-shop" onclick="switchMenu('shop')"><div class="icon">🛒</div><div>상점</div></div>
         <div class="nav-item" id="nav-character" onclick="switchMenu('character')"><div class="icon">🐾</div><div>캐릭터</div></div>
@@ -474,7 +490,7 @@
 
     let multiplier = 1;
     let itemCost = 10; 
-    let currentMenu = 'lobby'; // 💡 초기 시작을 로비로 변경
+    let currentMenu = 'lobby'; 
     let previousMenu = 'lobby'; 
     const COST_REVIVE = 3;
     const COST_RESTART = 10;
@@ -527,7 +543,6 @@
     const wipeoutAnim = document.getElementById('wipeout-anim');
     const appContainer = document.getElementById('app');
     
-    // 💡 변경된 배틀 캐릭터 DOM 요소
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
 
@@ -569,8 +584,7 @@
         } else { info.style.visibility = 'hidden'; energyTimeRemaining = 15; }
     }, 1000);
 
-    // ================= [ 💡 신규 로비 스와이프 및 캐릭터 관리 스크립트 ] =================
-    // 캐릭터 04, 05, 06 추가
+    // ================= [ 로비 스와이프 및 캐릭터 관리 스크립트 ] =================
     const lobbyChars = [
         'images/character/lobby/animal/01.png',
         'images/character/lobby/animal/02.png',
@@ -782,7 +796,6 @@
         if (menuId === 'character') renderCharacterGrid(); 
         if (menuId === 'myroom') renderMyRoom();
         
-        // 💡 탭이 '전투'로 변경될 때 사이즈 계산을 강제 업데이트 (오류방지)
         if (menuId === 'battle') {
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 10);
         }
@@ -796,13 +809,13 @@
         });
     }
 
-    // ================= [ 타격감 및 전투 시스템 (Hero 변경 포함) ] =================
+    // ================= [ 타격감 및 전투 시스템 ] =================
     function createMergeEffect(x, y, level) {
         const effect = document.createElement('div'); effect.style.position = 'absolute'; effect.style.left = x + 'px'; effect.style.top = y + 'px';
         const size = 30 + (level * 10); effect.style.width = size + 'px'; effect.style.height = size + 'px';
         effect.style.transform = 'translate(-50%, -50%)'; effect.style.background = 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0) 70%)';
         effect.style.borderRadius = '50%'; effect.style.pointerEvents = 'none'; effect.style.zIndex = '15'; effect.style.animation = 'popEffect 0.3s ease-out forwards';
-        document.getElementById('game-section').appendChild(effect); setTimeout(() => effect.remove(), 300);
+        document.getElementById('physics-area').appendChild(effect); setTimeout(() => effect.remove(), 300);
         if (level >= 4) { appContainer.classList.add('merge-shake'); setTimeout(() => appContainer.classList.remove('merge-shake'), 150); }
     }
 
@@ -817,7 +830,6 @@
         isFeverMode = true; feverTime = 10; feverBanner.style.display = 'block'; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
         document.getElementById('battle-stage').style.boxShadow = "0 0 20px #f6e58d, inset 0 4px 10px rgba(0,0,0,0.05)";
         
-        // 💡 피버(비상탈출 성공 시) 축하 액션 이미지
         heroEl.src = 'images/character/battle/01_victory.png'; heroEl.classList.add('happy');
         setTimeout(() => { heroEl.src = 'images/character/battle/01_Idle.png'; heroEl.classList.remove('happy'); }, 2000);
 
@@ -857,12 +869,10 @@
         enemyEl.className = 'character enemy slide-in';
 
         setTimeout(() => {
-            // 💡 히어로 이미지 교체: 공격!
             heroEl.src = 'images/character/battle/01_Attack.png';
             heroEl.classList.add('attack');
             
             setTimeout(() => {
-                // 💡 애니메이션 종료 후 01_Idle(또는 fever시 victory)로 복귀
                 heroEl.src = isFeverMode ? 'images/character/battle/01_victory.png' : 'images/character/battle/01_Idle.png';
                 heroEl.classList.remove('attack'); 
                 enemyEl.className = 'character enemy explode';
@@ -924,22 +934,32 @@
     // ================= [ 물리 엔진 Init ] =================
     window.onload = () => {
         const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events;
-        const gameSection = document.getElementById('game-section');
         
-        let width = gameSection.clientWidth; let height = gameSection.clientHeight;
+        // 💡 캔버스는 이제 physics-area 내부에 렌더링됩니다.
+        const physicsArea = document.getElementById('physics-area');
+        const viewBattle = document.getElementById('view-battle');
+        
+        const isHidden = !viewBattle.classList.contains('active');
+        if (isHidden) { viewBattle.style.display = 'flex'; viewBattle.style.visibility = 'hidden'; }
+        
+        let width = physicsArea.clientWidth; 
+        let height = physicsArea.clientHeight;
+
+        if (isHidden) { viewBattle.style.display = ''; viewBattle.style.visibility = ''; }
 
         const engine = Engine.create({ enableSleeping: false }); const world = engine.world;
         window.gameEngine = engine;
         
         const render = Render.create({
-            element: gameSection, engine: engine,
+            element: physicsArea, engine: engine,
             options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
         });
 
         Render.run(render); Runner.run(Runner.create(), engine);
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
-        const floor = Bodies.rectangle(width / 2, height + 100, width * 5, 200, wallOptions);
+        // 💡 바닥 높이를 컨테이너의 하단에 정확히 일치시킵니다.
+        const floor = Bodies.rectangle(width / 2, height + 50, width * 5, 100, wallOptions);
         const leftWall = Bodies.rectangle(-50, height / 2, 100, height * 5, wallOptions);
         const rightWall = Bodies.rectangle(width + 50, height / 2, 100, height * 5, wallOptions);
         const ceiling = Bodies.rectangle(width / 2, -800, width * 5, 100, wallOptions);
@@ -952,12 +972,20 @@
         };
 
         window.addEventListener('resize', () => {
-            width = gameSection.clientWidth; height = gameSection.clientHeight;
-            if(width === 0 || height === 0) return; 
-            render.canvas.width = width * window.devicePixelRatio; render.canvas.height = height * window.devicePixelRatio;
+            if (currentMenu !== 'battle') return; 
+            
+            let newWidth = physicsArea.clientWidth; let newHeight = physicsArea.clientHeight;
+            if(newWidth === 0 || newHeight === 0) return; 
+            
+            width = newWidth; height = newHeight;
+            render.bounds.max.x = width; render.bounds.max.y = height;
             render.options.width = width; render.options.height = height;
             
-            Matter.Body.setPosition(floor, { x: width / 2, y: height + 100 });
+            render.canvas.width = width * render.options.pixelRatio; 
+            render.canvas.height = height * render.options.pixelRatio;
+            render.context.setTransform(render.options.pixelRatio, 0, 0, render.options.pixelRatio, 0, 0);
+            
+            Matter.Body.setPosition(floor, { x: width / 2, y: height + 50 });
             Matter.Body.setPosition(leftWall, { x: -50, y: height / 2 });
             Matter.Body.setPosition(rightWall, { x: width + 50, y: height / 2 });
         });
@@ -1028,7 +1056,6 @@
             if (!consumeEnergy(COST_RESTART)) return;
             overlayCrisis.style.display = 'none'; isGameOver = true;
             
-            // 💡 싹쓸이 시 절망하는 흑백 효과 연출
             heroEl.style.filter = 'grayscale(1) brightness(0.6)';
             wipeoutAnim.style.display = 'block'; appContainer.classList.add('shake-active');
             if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
@@ -1036,7 +1063,7 @@
             setTimeout(() => {
                 const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
                 wipeoutAnim.style.display = 'none'; appContainer.classList.remove('shake-active'); 
-                heroEl.style.filter = 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'; // 원상 복구
+                heroEl.style.filter = 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))'; 
                 
                 showFloatingText(`싹쓸이 완료! 새 판 시작`, window.innerWidth/2 - 80, window.innerHeight/2, '#fff');
                 setTimeout(() => { isGameOver = false; isCrisis = false; updatePreview(); }, 500);
@@ -1078,21 +1105,22 @@
         }
         updatePreview();
 
-        gameSection.addEventListener('pointerdown', (e) => { 
+        // 💡 마우스 및 터치 이벤트를 physicsArea 기준으로 완벽 매핑
+        physicsArea.addEventListener('pointerdown', (e) => { 
             if (isAutoDrop || currentMenu !== 'battle' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return;
-            const rect = gameSection.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
+            const rect = physicsArea.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
             dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
         });
 
-        gameSection.addEventListener('pointermove', (e) => {
+        physicsArea.addEventListener('pointermove', (e) => {
             if(isGameOver || isCrisis || isAutoDrop || isMinigameActive || isEventPause || !canDrop || currentMenu !== 'battle') return;
-            const rect = gameSection.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
+            const rect = physicsArea.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
             dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
         });
 
-        gameSection.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; });
+        physicsArea.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; });
 
-        gameSection.addEventListener('pointerup', (e) => { 
+        physicsArea.addEventListener('pointerup', (e) => { 
             if (isAutoDrop || currentMenu !== 'battle' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return; executeDrop(lastMouseX); 
         });
 
