@@ -77,7 +77,7 @@
         .view-container.active { display: flex; }
         #view-battle { background: transparent; touch-action: none; }
 
-        /* ================= [ 뷰: 로비 신규 구현 ] ================= */
+        /* ================= [ 뷰: 로비 ] ================= */
         #view-lobby {
             background: url('images/bg/lobby/01_seashore.jpg') center center / cover no-repeat;
             align-items: center; justify-content: center; position: relative;
@@ -121,14 +121,27 @@
             background-size: 90px 100%, 100% 100%; border: 3px solid #b9a0e6; border-radius: 12px; position: relative; overflow: hidden;
             animation: scrollBg 1.5s linear infinite; transition: box-shadow 0.3s;
         }
-        .character { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; }
-        .hero { left: 35%; margin-left: -32px; transform: scaleX(-1); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
-        .hero.attack { transform: scaleX(-1) translateX(-60px) rotate(-20deg) scale(1.2); }
-        .hero.happy { transform: scaleX(-1) translateY(-15px) scale(1.1); filter: drop-shadow(0 0 15px #f6e58d); }
         
-        .enemy { right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
-        .enemy.slide-in { right: 15%; opacity: 1; }
-        .enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
+        /* 💡 적 캐릭터(기존 텍스트 이모지 유지) */
+        .character.enemy { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
+        .character.enemy.slide-in { right: 15%; opacity: 1; }
+        .character.enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
+
+        /* 💡 커스텀 히어로 캐릭터 전용 CSS */
+        .hero { 
+            position: absolute; left: 15%; top: 25px; 
+            height: 90px; width: auto; object-fit: contain;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); 
+            transition: all 0.15s ease-out; z-index: 5;
+        }
+        .hero.attack { transform: translateX(50px) rotate(15deg) scale(1.2); }
+        .hero.happy { transform: translateY(-15px) scale(1.1); filter: drop-shadow(0 0 15px #f6e58d); }
+
+        @keyframes explodeAnim { 
+            0% { transform: scale(1); opacity: 1; filter: brightness(1); } 
+            50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 15px #ff4757); } 
+            100% { transform: scale(2) rotate(15deg); opacity: 0; filter: blur(4px); } 
+        }
 
         #game-section {
             flex: 1; background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(220, 240, 255, 0.6));
@@ -257,7 +270,7 @@
 
     <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
-        <!-- 💡 뷰 1: 신규 로비 (기본 활성화) -->
+        <!-- 💡 뷰 1: 로비 (시작 화면) -->
         <div id="view-lobby" class="view-container active">
             <div class="lobby-title-bar">나만의 로비</div>
             <div class="lobby-char-container" id="lobby-touch-area">
@@ -267,11 +280,12 @@
             </div>
         </div>
 
-        <!-- 💡 뷰 2: 전투 (기존 홈) -->
+        <!-- 💡 뷰 2: 전투 -->
         <div id="view-battle" class="view-container">
             <div id="board-section">
                 <div id="battle-stage">
-                    <div id="hero" class="character hero">🤺</div>
+                    <!-- 💡 새로운 배틀 캐릭터 출력부 적용 -->
+                    <img id="hero" class="hero" src="images/character/battle/01_Idle.png" alt="Hero">
                     <div id="enemy" class="character enemy">🦇</div>
                 </div>
             </div>
@@ -405,7 +419,7 @@
         </div>
     </div>
 
-    <!-- 💡 하단 공통 네비게이션 바 (순서 및 이름/아이콘 전면 개편) -->
+    <!-- 💡 하단 공통 네비게이션 바 -->
     <div id="bottom-nav">
         <div class="nav-item" id="nav-shop" onclick="switchMenu('shop')"><div class="icon">🛒</div><div>상점</div></div>
         <div class="nav-item" id="nav-character" onclick="switchMenu('character')"><div class="icon">🐾</div><div>캐릭터</div></div>
@@ -460,8 +474,7 @@
 
     let multiplier = 1;
     let itemCost = 10; 
-    // 💡 시작 메뉴를 로비로 설정
-    let currentMenu = 'lobby';
+    let currentMenu = 'lobby'; // 💡 초기 시작을 로비로 변경
     let previousMenu = 'lobby'; 
     const COST_REVIVE = 3;
     const COST_RESTART = 10;
@@ -513,10 +526,12 @@
     const feverBanner = document.getElementById('fever-banner');
     const wipeoutAnim = document.getElementById('wipeout-anim');
     const appContainer = document.getElementById('app');
+    
+    // 💡 변경된 배틀 캐릭터 DOM 요소
     const heroEl = document.getElementById('hero');
     const enemyEl = document.getElementById('enemy');
 
-    // 💡 구슬 데이터: 요청하신 animal 경로로 일괄 변경
+    // 구슬 데이터
     const baseImgSize = 256;
     let LEVELS = [
         { radius: 12, img: 'images/bead/animal/lv01.png' }, { radius: 18, img: 'images/bead/animal/lv02.png' },
@@ -527,10 +542,7 @@
         { radius: 125, img: 'images/bead/animal/lv11.png' }, { radius: 145, img: 'images/bead/animal/lv12.png' }
     ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
-    let tempImgs = [];
-    let tempOwned = [];
-    let tempEmojis = [];
-    let selectedMergeIndex = -1;
+    let tempImgs = []; let tempOwned = []; let tempEmojis = []; let selectedMergeIndex = -1;
 
     function updateShieldUI() {
         let html = '';
@@ -541,36 +553,31 @@
         document.getElementById('shield-badge').innerHTML = html;
     }
 
-    function updateEnergyUI() {
-        uiEnergy.innerText = energy + " / 50";
-        uiGold.innerText = gold.toLocaleString(); 
-    }
+    function updateEnergyUI() { uiEnergy.innerText = energy + " / 50"; uiGold.innerText = gold.toLocaleString(); }
     updateEnergyUI(); updateShieldUI();
 
     setInterval(() => {
         const info = document.getElementById('recharge-info');
         if (energy < 50) {
-            info.style.visibility = 'visible';
-            energyTimeRemaining--;
+            info.style.visibility = 'visible'; energyTimeRemaining--;
             if (energyTimeRemaining <= 0) {
-                energy += 10;
-                if (energy > 50) energy = 50;
-                updateEnergyUI();
+                energy += 10; if (energy > 50) energy = 50; updateEnergyUI();
                 showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, 50, '#1dd1a1');
                 energyTimeRemaining = 15;
             }
             info.innerText = `⏳ ${energyTimeRemaining}s (+10)`;
-        } else {
-            info.style.visibility = 'hidden';
-            energyTimeRemaining = 15;
-        }
+        } else { info.style.visibility = 'hidden'; energyTimeRemaining = 15; }
     }, 1000);
 
     // ================= [ 💡 신규 로비 스와이프 및 캐릭터 관리 스크립트 ] =================
+    // 캐릭터 04, 05, 06 추가
     const lobbyChars = [
         'images/character/lobby/animal/01.png',
         'images/character/lobby/animal/02.png',
-        'images/character/lobby/animal/03.png'
+        'images/character/lobby/animal/03.png',
+        'images/character/lobby/animal/04.png',
+        'images/character/lobby/animal/05.png',
+        'images/character/lobby/animal/06.png'
     ];
     let currentLobbyCharIdx = 0;
     const lobbyCharImg = document.getElementById('lobby-char-img');
@@ -582,57 +589,33 @@
             lobbyCharImg.style.opacity = 1;
         }, 150);
     }
-    window.prevLobbyChar = function() {
-        currentLobbyCharIdx = (currentLobbyCharIdx - 1 + lobbyChars.length) % lobbyChars.length;
-        updateLobbyChar();
-    }
-    window.nextLobbyChar = function() {
-        currentLobbyCharIdx = (currentLobbyCharIdx + 1) % lobbyChars.length;
-        updateLobbyChar();
-    }
+    window.prevLobbyChar = function() { currentLobbyCharIdx = (currentLobbyCharIdx - 1 + lobbyChars.length) % lobbyChars.length; updateLobbyChar(); }
+    window.nextLobbyChar = function() { currentLobbyCharIdx = (currentLobbyCharIdx + 1) % lobbyChars.length; updateLobbyChar(); }
 
-    // 터치 스와이프 이벤트 리스너 추가
-    let touchStartX = 0;
-    let touchEndX = 0;
+    let touchStartX = 0; let touchEndX = 0;
     const lobbyTouchArea = document.getElementById('lobby-touch-area');
-    
-    lobbyTouchArea.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, {passive: true});
-    
-    lobbyTouchArea.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleLobbySwipe();
-    }, {passive: true});
-    
+    lobbyTouchArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    lobbyTouchArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleLobbySwipe(); }, {passive: true});
     function handleLobbySwipe() {
-        if (touchEndX < touchStartX - 50) nextLobbyChar(); // 왼쪽으로 스와이프 -> 다음 캐릭터
-        if (touchEndX > touchStartX + 50) prevLobbyChar(); // 오른쪽으로 스와이프 -> 이전 캐릭터
+        if (touchEndX < touchStartX - 50) nextLobbyChar(); // 왼쪽 스와이프
+        if (touchEndX > touchStartX + 50) prevLobbyChar(); // 오른쪽 스와이프
     }
 
     // ================= [ 설정 및 프로필 변경 스크립트 ] =================
     window.openSettings = function() {
-        previousMenu = currentMenu;
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        document.getElementById('view-settings').classList.add('active');
-        document.getElementById('bottom-nav').style.display = 'none'; 
+        previousMenu = currentMenu; document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-settings').classList.add('active'); document.getElementById('bottom-nav').style.display = 'none'; 
     }
     window.closeSettings = function() {
-        document.getElementById('view-settings').classList.remove('active');
-        document.getElementById('view-' + previousMenu).classList.add('active');
+        document.getElementById('view-settings').classList.remove('active'); document.getElementById('view-' + previousMenu).classList.add('active');
         document.getElementById('bottom-nav').style.display = 'flex';
     }
     window.changeUserName = function() {
         const newName = prompt("새로운 이름을 입력하세요.", userName);
-        if(newName && newName.trim() !== "") {
-            userName = newName.trim();
-            document.getElementById('settings-user-name').innerText = userName;
-            showFloatingText("이름이 변경되었습니다!", window.innerWidth/2 - 70, window.innerHeight/2, "#1dd1a1");
-        }
+        if(newName && newName.trim() !== "") { userName = newName.trim(); document.getElementById('settings-user-name').innerText = userName; showFloatingText("이름이 변경되었습니다!", window.innerWidth/2 - 70, window.innerHeight/2, "#1dd1a1"); }
     }
     window.openProfileSelect = function() {
-        const grid = document.getElementById('profile-select-grid');
-        grid.innerHTML = '';
+        const grid = document.getElementById('profile-select-grid'); grid.innerHTML = '';
         LEVELS.forEach((lv) => {
             const img = document.createElement('img'); img.src = lv.img;
             img.style.cssText = "width:65px; height:65px; object-fit:contain; cursor:pointer; background:#e8dff5; border-radius:12px; padding:5px;";
@@ -640,16 +623,11 @@
         });
         document.getElementById('overlay-profile-select').style.display = 'flex';
     }
-    window.selectProfileImg = function(src) {
-        profileImgSrc = src; updateProfilePics(); closeProfileSelect();
-    }
+    window.selectProfileImg = function(src) { profileImgSrc = src; updateProfilePics(); closeProfileSelect(); }
     window.closeProfileSelect = function() { document.getElementById('overlay-profile-select').style.display = 'none'; }
     function updateProfilePics() {
         const pics = [document.getElementById('top-profile-pic'), document.getElementById('settings-profile-pic')];
-        pics.forEach(pic => {
-            if (profileImgSrc) pic.innerHTML = `<img src="${profileImgSrc}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
-            else pic.innerHTML = '👩';
-        });
+        pics.forEach(pic => { if (profileImgSrc) pic.innerHTML = `<img src="${profileImgSrc}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`; else pic.innerHTML = '👩'; });
     }
 
     // ================= [ 간식서리 미니게임 스크립트 ] =================
@@ -804,7 +782,7 @@
         if (menuId === 'character') renderCharacterGrid(); 
         if (menuId === 'myroom') renderMyRoom();
         
-        // 💡 탭이 '전투'로 변경될 때 Matter.js canvas가 비가시 상태에서 풀리므로 resize를 강제 호출하여 크기 오류 방지
+        // 💡 탭이 '전투'로 변경될 때 사이즈 계산을 강제 업데이트 (오류방지)
         if (menuId === 'battle') {
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 10);
         }
@@ -818,7 +796,7 @@
         });
     }
 
-    // ================= [ 타격감 및 전투 시스템 ] =================
+    // ================= [ 타격감 및 전투 시스템 (Hero 변경 포함) ] =================
     function createMergeEffect(x, y, level) {
         const effect = document.createElement('div'); effect.style.position = 'absolute'; effect.style.left = x + 'px'; effect.style.top = y + 'px';
         const size = 30 + (level * 10); effect.style.width = size + 'px'; effect.style.height = size + 'px';
@@ -838,8 +816,10 @@
         if (isFeverMode) return;
         isFeverMode = true; feverTime = 10; feverBanner.style.display = 'block'; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
         document.getElementById('battle-stage').style.boxShadow = "0 0 20px #f6e58d, inset 0 4px 10px rgba(0,0,0,0.05)";
-        const originHero = heroEl.innerText; heroEl.innerText = '🤩'; heroEl.classList.add('happy');
-        setTimeout(() => { heroEl.innerText = originHero; heroEl.classList.remove('happy'); }, 2000);
+        
+        // 💡 피버(비상탈출 성공 시) 축하 액션 이미지
+        heroEl.src = 'images/character/battle/01_victory.png'; heroEl.classList.add('happy');
+        setTimeout(() => { heroEl.src = 'images/character/battle/01_Idle.png'; heroEl.classList.remove('happy'); }, 2000);
 
         feverInterval = setInterval(() => {
             feverTime--; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
@@ -877,9 +857,15 @@
         enemyEl.className = 'character enemy slide-in';
 
         setTimeout(() => {
+            // 💡 히어로 이미지 교체: 공격!
+            heroEl.src = 'images/character/battle/01_Attack.png';
             heroEl.classList.add('attack');
+            
             setTimeout(() => {
-                heroEl.classList.remove('attack'); enemyEl.className = 'character enemy explode';
+                // 💡 애니메이션 종료 후 01_Idle(또는 fever시 victory)로 복귀
+                heroEl.src = isFeverMode ? 'images/character/battle/01_victory.png' : 'images/character/battle/01_Idle.png';
+                heroEl.classList.remove('attack'); 
+                enemyEl.className = 'character enemy explode';
                 if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
                 const rand = Math.floor(Math.random() * 12);
@@ -967,7 +953,7 @@
 
         window.addEventListener('resize', () => {
             width = gameSection.clientWidth; height = gameSection.clientHeight;
-            if(width === 0 || height === 0) return; // display:none 상태 무시
+            if(width === 0 || height === 0) return; 
             render.canvas.width = width * window.devicePixelRatio; render.canvas.height = height * window.devicePixelRatio;
             render.options.width = width; render.options.height = height;
             
@@ -979,7 +965,6 @@
         window.addEventListener('deviceorientation', (event) => {
             let gamma = event.gamma || 0; let beta = event.beta || 0;
             if (!isTiltActive && !isAutoDrop) return;
-            // 💡 메뉴가 'battle'일 때만 중력 반응 허용
             if (currentMenu !== 'battle' || isCrisis || isMinigameActive || isEventPause) return; 
             
             let adjustedBeta = beta - 45; const maxForce = 3; const sensitivity = 30;
@@ -1042,20 +1027,24 @@
         window.giveUpGame = function() {
             if (!consumeEnergy(COST_RESTART)) return;
             overlayCrisis.style.display = 'none'; isGameOver = true;
-            const originHero = heroEl.innerText; heroEl.innerText = '😱';
+            
+            // 💡 싹쓸이 시 절망하는 흑백 효과 연출
+            heroEl.style.filter = 'grayscale(1) brightness(0.6)';
             wipeoutAnim.style.display = 'block'; appContainer.classList.add('shake-active');
             if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
 
             setTimeout(() => {
                 const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
-                wipeoutAnim.style.display = 'none'; appContainer.classList.remove('shake-active'); heroEl.innerText = originHero;
+                wipeoutAnim.style.display = 'none'; appContainer.classList.remove('shake-active'); 
+                heroEl.style.filter = 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'; // 원상 복구
+                
                 showFloatingText(`싹쓸이 완료! 새 판 시작`, window.innerWidth/2 - 80, window.innerHeight/2, '#fff');
                 setTimeout(() => { isGameOver = false; isCrisis = false; updatePreview(); }, 500);
             }, 1000);
         }
 
         window.useItem = function(itemType) {
-            if (isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'battle') return; // 💡 'battle' 일때만 사용 허용
+            if (isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'battle') return; 
             if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, window.innerHeight/2); return; }
             if (!consumeEnergy(itemCost)) return; 
             const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
@@ -1090,7 +1079,6 @@
         updatePreview();
 
         gameSection.addEventListener('pointerdown', (e) => { 
-            // 💡 메뉴가 'battle' 일때만 동작
             if (isAutoDrop || currentMenu !== 'battle' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return;
             const rect = gameSection.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
             dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
