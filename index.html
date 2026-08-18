@@ -3,1655 +3,1225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Merge & Roll - Reward Multiplier Edition</title>
+    <title>TEST</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', 'Segoe UI', sans-serif; }
         
         body { 
-            margin: 0; padding: 0; background: #2b2b2b; 
+            margin: 0; padding: 0; 
+            /* 전체 배경: 신규 배경들과 어울리는 소프트 퍼플 & 피치 그라데이션 */
+            background: linear-gradient(135deg, #a8c0ff 0%, #ecd4ff 50%, #ffe0cc 100%);
             display: flex; justify-content: center; align-items: center; 
             height: 100dvh; width: 100vw; overflow: hidden;
-            color: #4a4e69; user-select: none; touch-action: none;
+            color: #4a4e69; 
+            overscroll-behavior-y: none;
         }
-
         #app {
             width: 100%; max-width: 420px; height: 100dvh; 
-            background: rgba(253, 251, 247, 1); position: relative;
+            background: rgba(253, 251, 247, 0.95); position: relative;
             display: flex; flex-direction: column;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5); overflow: hidden;
+            box-shadow: 0 10px 30px rgba(185, 160, 230, 0.4); overflow: hidden;
         }
-
         @media (min-width: 421px) {
-            #app { height: 800px; border-radius: 12px; border: 4px solid #d2bce3; }
+            #app { height: 95vh; border: 4px solid #d2bce3; border-radius: 16px; }
         }
 
-        @keyframes mergeShake { 0% { transform: translate(1px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -1px) rotate(-1deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
-        .merge-shake { animation: mergeShake 0.15s ease-in-out; }
-        
-        @keyframes whiteFlash { 0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; filter: brightness(2); background: rgba(255,255,255,1); } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; background: rgba(255,255,255,0); } }
-        @keyframes ringExpand { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; border: 4px solid rgba(255,255,255,0.9); } 100% { transform: translate(-50%, -50%) scale(2.0); opacity: 0; border: 1px solid rgba(255,255,255,0); } }
+        @keyframes shakeScreen {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            20% { transform: translate(-3px, -2px) rotate(-1deg); }
+            40% { transform: translate(3px, 0px) rotate(1deg); }
+            60% { transform: translate(-2px, 3px) rotate(0deg); }
+            80% { transform: translate(2px, -1px) rotate(-1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+        .shake-active { animation: shakeScreen 0.5s ease-in-out; }
 
-        /* ================= [ 💡 상단 바 (타이머 복구) ] ================= */
-        #top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 2px solid #e8dff5; flex-shrink: 0; z-index: 20; }
-        .stat-badge { background: #fdfbf7; padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 900; border: 2px solid #e8dff5; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
-        .stat-badge.gold { color: #d35400; border-color: #ffeaa7; background: #fffdf2; } 
-        .stat-badge.timer { color: #27ae60; border-color: #a8e6cf; background: #f0fff4; min-width: 80px;}
-        .stat-badge.merge { color: #6a4c9c; }
-        .top-stats { display: flex; gap: 8px; align-items: center; justify-content: flex-end;}
+        @keyframes mergeShake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+        .merge-shake { animation: mergeShake 0.15s ease-in-out; }
+
+        /* 💡 신규 머지 이펙트 (화이트 번 + 링 커짐) */
+        @keyframes whiteFlash {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; filter: brightness(2); background: rgba(255,255,255,1); }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; background: rgba(255,255,255,0); }
+        }
+        @keyframes ringExpand {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; border: 4px solid rgba(255,255,255,0.9); }
+            100% { transform: translate(-50%, -50%) scale(2.0); opacity: 0; border: 1px solid rgba(255,255,255,0); }
+        }
+
+        /* ================= [ 상단 바 ] ================= */
+        #top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; background: #fff; border-bottom: 2px solid #e8dff5; flex-shrink: 0; z-index: 20;
+        }
+        .profile-pic { 
+            width: 28px; height: 28px; background: #e8dff5; border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; font-size: 16px; border: 2px solid #b9a0e6; overflow: hidden; cursor: pointer;
+        }
+        .top-stats { display: flex; gap: 5px; align-items: center;}
+        .stat-badge { 
+            background: #fdfbf7; padding: 4px 6px; border-radius: 10px; 
+            font-size: 12px; font-weight: bold; border: 1px solid #e8dff5; display: flex; align-items: center; justify-content: center; gap: 3px;
+        }
+        #energy-badge { flex-direction: column; gap: 2px; min-width: 80px; min-height: 40px; justify-content: center; }
+        #recharge-info { font-size: 10px; color: #d81b60; font-weight: bold; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); visibility: hidden; }
+        .settings-btn { font-size: 18px; cursor: pointer; padding-left: 2px;}
 
         /* ================= [ SPA 뷰 컨테이너 구조 ] ================= */
-        #main-content { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #fdfbf7; }
-        .view-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; overflow: hidden; }
+        #main-content {
+            flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden;
+        }
+        .view-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; background: #fdfbf7; overflow: hidden; 
+        }
         .view-container.active { display: flex; }
 
-        /* ================= [ 💡 뷰 1: 상점 (통합 뽑기 & 합성소) ] ================= */
-        #view-shop { background: #fff; overflow-y: auto; }
-        .shop-banner { background: linear-gradient(135deg, #a29bfe, #6c5ce7); padding: 30px 20px; text-align: center; color: white; border-bottom: 4px solid #574b90; }
-        .shop-banner h1 { margin: 0 0 10px 0; font-size: 24px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .shop-rates { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 12px; display: flex; justify-content: space-around; font-weight: bold; }
-        .shop-rates span.c { color: #dcdde1; } .shop-rates span.b { color: #74b9ff; } .shop-rates span.a { color: #a29bfe; } .shop-rates span.s { color: #fab1a0; } .shop-rates span.ss { color: #ffeaa7; text-shadow: 0 0 5px #fdcb6e;}
-        
-        .gacha-btn-container { display: flex; flex-direction: column; gap: 15px; padding: 25px 20px; align-items: center;}
-        .btn-gacha { width: 100%; max-width: 320px; background: #fff; border: 3px solid #ffeaa7; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.1s; box-shadow: 0 6px 0 #fdcb6e; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;}
-        .btn-gacha:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
-        .btn-gacha:disabled { filter: grayscale(1); opacity: 0.6; cursor: not-allowed; }
-        .btn-gacha .title { font-size: 22px; font-weight: 900; color: #d35400; }
-        .btn-gacha .cost-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;}
-        .btn-gacha .cost { font-size: 14px; font-weight: bold; padding: 6px 12px; border-radius: 8px; display:flex; align-items:center; gap:4px; background: #fdfbf7; border: 1px solid #e8dff5;}
+        /* ================= [ 뷰: 로비 ] ================= */
+        #view-lobby {
+            background: url('images/bg/lobby/01_seashore.jpg') center center / cover no-repeat;
+            align-items: center; justify-content: center; position: relative;
+        }
+        .lobby-char-container {
+            position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .lobby-char {
+            height: 75%; max-height: 600px; object-fit: contain; filter: drop-shadow(0 15px 20px rgba(0,0,0,0.3));
+            animation: floatChar 3s ease-in-out infinite; transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        @keyframes floatChar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .lobby-nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); font-size: 24px; color: #4a4e69;
+            background: rgba(255,255,255,0.7); border: 2px solid #b9a0e6; border-radius: 50%; 
+            width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s;
+        }
+        .lobby-nav-btn:active { transform: translateY(-50%) scale(0.9); }
+        .lobby-prev { left: 15px; }
+        .lobby-next { right: 15px; }
+        .lobby-title-bar {
+            position: absolute; top: 20px; background: rgba(255,255,255,0.85); padding: 8px 20px; 
+            border-radius: 20px; border: 2px solid #b9a0e6; font-weight: 900; color: #6a4c9c;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 10;
+        }
 
-        /* 통합 합성소 패널 */
-        .panel { background: #fff; border: 2px solid #e8dff5; border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .panel-title { font-size: 16px; font-weight: 900; color: #6a4c9c; border-bottom: 2px dashed #e8dff5; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
-        .action-btn-main { width: 100%; background: #b9f6ca; border: 2px solid #69f0ae; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 900; color: #1b5e20; cursor: pointer; box-shadow: 0 4px 0 #69f0ae; transition: all 0.1s; margin-bottom: 15px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 8px;}
-        .action-btn-main:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-        .action-btn-sub { flex: 1; background: #fdfbf7; border: 2px solid #e8dff5; border-radius: 8px; padding: 10px; font-weight: bold; color: #6a4c9c; cursor: pointer; box-shadow: 0 4px 0 #e8dff5; transition: all 0.1s; }
-        .action-btn-sub:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-
-        /* ================= [ 뷰 2: 전투 & 머지 화면 ] ================= */
-        #board-section { flex-shrink: 0; height: 160px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6; display: flex; justify-content: center; align-items: center; padding: 10px; z-index: 10; }
-        #battle-stage { width: 100%; height: 100%; background: url('images/bg/bt/bt_bg01.png') center center / 100% 100% no-repeat; background-color: #2c2c2c; border: 3px solid #b9a0e6; border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+        /* ================= [ 뷰: 전투 ] ================= */
+        #board-section {
+            flex-shrink: 0; height: 145px; background: #e8dff5; position: relative; border-bottom: 4px solid #b9a0e6;
+            display: flex; justify-content: center; align-items: center; padding: 5px 10px; z-index: 10;
+        }
         
-        .hero { height: 90px; width: auto; object-fit: contain; transition: all 0.15s ease-out; transform-origin: center bottom; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); z-index: 5; }
+        #battle-stage {
+            width: 100%; height: 135px; background-color: #2c2c2c;
+            background: url('images/bg/bt/bt_bg01.png') center center / 100% 100% no-repeat;
+            border: 3px solid #b9a0e6; border-radius: 12px; position: relative; overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        
+        .character.enemy { position: absolute; font-size: 65px; top: 45px; line-height: 1; transition: all 0.2s ease-out; right: -80px; opacity: 0; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
+        .character.enemy.slide-in { right: 15%; opacity: 1; }
+        .character.enemy.explode { right: 15%; animation: explodeAnim 0.4s forwards ease-out; }
+
+        .hero { 
+            position: absolute; left: 15%; top: 25px; 
+            height: 90px; width: auto; object-fit: contain;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); 
+            transition: all 0.15s ease-out; z-index: 5;
+        }
         .hero.attack { transform: translateX(50px) rotate(15deg) scale(1.2); }
-        .character.enemy { font-size: 58px; line-height: 1; transition: all 0.2s ease-out; opacity: 0; transform: translateX(50px); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
-        .character.enemy.slide-in { transform: translateX(0); opacity: 1; }
-        .character.enemy.explode { animation: explodeAnim 0.4s forwards ease-out; }
-        
-        .hit-effect-sprite { position: absolute; right: 35px; top: 50%; transform: translateY(-50%) scale(0.5); font-size: 50px; opacity: 0; pointer-events: none; z-index: 10; animation: hitFlash 0.3s ease-out forwards; }
-        
-        #game-section { flex: 1; position: relative; overflow: hidden; touch-action: none; background-color: #fdfbf7; display: flex; flex-direction: column; align-items: center; padding-top: 10px;}
-        
-        /* 💡 물리엔진 캔버스가 완벽하게 작동하도록 크기를 명시적으로 고정 */
-        #merge-box { width: 390px; height: 380px; position: relative; border-radius: 12px; overflow: hidden; touch-action: none; margin-bottom: 10px; flex-shrink: 0;}
-        #physics-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('images/bg/merge/merge_bg01.png') center center / 100% 100% no-repeat; z-index: 0; pointer-events: none; }
-        #physics-guide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('images/bg/merge/merge_guide01.png') center center / 100% 100% no-repeat; pointer-events: none; z-index: 10; }
+        .hero.happy { transform: translateY(-15px) scale(1.1); filter: drop-shadow(0 0 15px #f6e58d); }
 
-        /* 내부 상호작용 영역 - 강제 고정 크기로 엇나감 원천 방지 */
-        #physics-area { position: absolute; top: 35px; left: 15px; width: 360px; height: 330px; z-index: 5; pointer-events: none; }
-        #touch-catcher { position: absolute; top: 35px; left: 15px; width: 360px; height: 330px; z-index: 25; cursor: crosshair; touch-action: none; }
+        @keyframes explodeAnim { 
+            0% { transform: scale(1); opacity: 1; filter: brightness(1); } 
+            50% { transform: scale(1.4) rotate(-15deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 15px #ff4757); } 
+            100% { transform: scale(2) rotate(15deg); opacity: 0; filter: blur(4px); } 
+        }
 
-        #preview-ball { position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; display: none; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
-        #deadline-line { position: absolute; top: 95px; left: 15px; width: 360px; height: 2px; border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
-        #warning-banner { position: absolute; top: 105px; left: 50%; transform: translateX(-50%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; display: none; z-index: 15; animation: pulse 0.5s infinite alternate; background: #ff477e; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); pointer-events: none;}
+        #game-section {
+            flex: 1; 
+            background: url('images/bg/merge/merge_bg01.png') center bottom / 100% 100% no-repeat;
+            position: relative; overflow: hidden; touch-action: none; background-color: #fdfbf7;
+        }
+        #game-section::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('images/bg/merge/merge_guide01.png') center bottom / 100% 100% no-repeat;
+            pointer-events: none; z-index: 10; 
+        }
+        
+        #physics-area {
+            position: absolute; 
+            top: 9%; bottom: 3%; left: 4%; right: 4%; 
+            z-index: 1; cursor: crosshair; overflow: hidden; border-radius: 8px;
+        }
+        #physics-area canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        #preview-ball { position: absolute; top: 20px; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; opacity: 0.9; display: none; }
+        #drop-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(185, 160, 230, 0.3); border-left: 2px dashed #b9a0e6; pointer-events: none; display: none; z-index: 5; transform: translateX(-50%); }
+        #deadline-line { position: absolute; top: 45px; left: 0; right: 0; height: 2px; background: rgba(255, 112, 166, 0.2); border-bottom: 2px dashed #ff70a6; z-index: 4; pointer-events: none; }
+        
+        #fever-banner { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); background: #f6e58d; color: #574b90; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(246, 229, 141, 0.6); display: none; z-index: 15; animation: pulseFever 0.4s infinite alternate; white-space: nowrap; }
+        #warning-banner { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: #ff477e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(255, 71, 126, 0.4); display: none; z-index: 15; animation: pulse 0.5s infinite alternate; }
+        #wipeout-anim { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 150px; z-index: 100; filter: drop-shadow(0 0 20px rgba(255, 71, 87, 0.8)); pointer-events: none; }
 
-        #ui-section { width: 390px; background: #f9f0ff; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #d2bce3; z-index: 10; border-radius: 12px; flex-shrink: 0;}
+        #ui-section { flex-shrink: 0; background: #f9f0ff; padding: 8px 12px; display: flex; flex-direction: column; border-top: 4px solid #d2bce3; z-index: 10; }
         .item-group { display: flex; justify-content: space-between; align-items: stretch; gap: 6px; }
-        .btn-item { flex: 1; padding: 6px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 900; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; }
+        .btn-item { flex: 1; padding: 5px 0; border: 2px solid #fff; border-radius: 10px; font-size: 11px; font-weight: 800; color: #4a4e69; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.1s; text-shadow: none; }
         .btn-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
-        .btn-item span.icon-main { font-size: 16px; margin-bottom: 2px; display: block; }
-        .cost-label { font-size: 11px; color: #d81b60; margin-top: 2px; font-weight: 900;}
+        .btn-item span.icon-main { font-size: 16px; margin-bottom: 2px; display: block; text-shadow: none; }
+        .cost-label { font-size: 10px; color: #d81b60; margin-top: 2px; font-weight: 800; text-shadow: none;}
         
         .btn-mult { background: #d1c4e9; box-shadow: 0 4px 0 #9575cd; justify-content: center; }
         .btn-hammer { background: #82ccdd; box-shadow: 0 4px 0 #60a3bc; } 
         .btn-shake { background: #f6e58d; box-shadow: 0 4px 0 #f4d03f; } 
-        .btn-tornado { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
-        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #d2bce3; transform: scale(1.05); margin: 0 4px;}
+        .btn-tilt { background: #b8e994; box-shadow: 0 4px 0 #78e08f; } 
+        .btn-tilt.active { background: #78e08f; box-shadow: 0 0 0 transparent; transform: translateY(4px); color: #fff;}
+        .btn-auto { flex: 1.2; background: #fff; box-shadow: 0 4px 0 #b2bec3; border: 2px solid #d2bce3; transform: scale(1.05); margin: 0 2px;}
         .btn-auto.active { background: #4fc3f7; color: white; box-shadow: 0 0 0 transparent; border-color:#fff; transform: scale(1.05) translateY(4px); }
 
-        /* ================= [ 제네릭 뷰 스타일 & 패널 ] ================= */
+        /* ================= [ 제네릭 뷰 스타일 (공통) ] ================= */
         .view-title { background: #cda8e6; color: white; text-align: center; padding: 15px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 10px rgba(185, 160, 230, 0.4); flex-shrink: 0; z-index:10; }
-        .view-content { padding: 20px; flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 40px;}
+        .view-content { padding: 20px; text-align: center; flex: 1; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding-bottom: 30px; }
 
-        /* 인벤토리 티어 시스템 공통 */
-        .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        
-        .tier-separator { grid-column: 1 / -1; font-size: 14px; font-weight: 900; color: #fff; padding: 6px 10px; margin-top: 15px; margin-bottom: 5px; border-radius: 8px; text-align: center; letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .tier-separator:first-child { margin-top: 0; }
-        .sep-SS { background: linear-gradient(90deg, #fbc02d, #ffeb3b, #fbc02d); color: #8e6800;}
-        .sep-S  { background: linear-gradient(90deg, #f57c00, #ffb74d, #f57c00); }
-        .sep-A  { background: linear-gradient(90deg, #8e24aa, #ba68c8, #8e24aa); }
-        .sep-B  { background: linear-gradient(90deg, #0288d1, #4fc3f7, #0288d1); }
-        .sep-C  { background: linear-gradient(90deg, #757575, #bdbdbd, #757575); }
+        .settings-section { background: #fff; border: 2px solid #e8dff5; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
+        .section-title { font-size: 14px; font-weight: 800; color: #b9a0e6; border-bottom: 2px dashed #e8dff5; padding-bottom: 8px; margin-bottom: 10px; text-align: left; }
+        .showroom-btn { width: 100%; background: #fdfbf7; border: 2px solid #e8dff5; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: bold; color: #4a4e69; text-align: left; cursor: pointer; transition: all 0.1s; margin-bottom: 8px; box-shadow: 0 3px 0 #e8dff5; }
+        .showroom-btn:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
 
-        .inv-item { border-radius: 12px; padding: 8px 5px; display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: transform 0.1s; border: 2px solid #e8dff5; background: #fdfbf7;}
-        .inv-item:active:not(.unowned) { transform: scale(0.95); }
-        .inv-item.unowned { filter: grayscale(1); opacity: 0.4; cursor: not-allowed; }
-        .inv-item.selected { outline: 3px solid #d81b60; box-shadow: 0 0 10px rgba(216,27,96,0.35); }
-        .empty-state { grid-column: 1 / -1; padding: 24px 10px; text-align:center; color:#999; font-size:13px; font-weight:700; }
-        
-        .tier-box-SS { background: linear-gradient(135deg, #fff9c4, #ffeb3b); border-color: #fbc02d; }
-        .tier-box-S  { background: linear-gradient(135deg, #ffe0b2, #ffb74d); border-color: #f57c00; }
-        .tier-box-A  { background: linear-gradient(135deg, #e1bee7, #ba68c8); border-color: #8e24aa; }
-        .tier-box-B  { background: linear-gradient(135deg, #b3e5fc, #4fc3f7); border-color: #0288d1; }
-        .tier-box-C  { background: linear-gradient(135deg, #f5f5f5, #e0e0e0); border-color: #9e9e9e; }
-        
-        .inv-item .emoji { font-size: 26px; margin-bottom: 2px; }
-        .inv-item .skin-img-icon { width: 35px; height: 35px; object-fit: contain; margin-bottom: 2px; }
-        .inv-item .count { position: absolute; top: -5px; right: -5px; background: #ff477e; color: #fff; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; z-index: 2;}
-        .tier-label { font-size: 9px; font-weight: 900; padding: 2px 4px; border-radius: 6px; color: #fff; margin-bottom:2px; background: rgba(0,0,0,0.4); }
+        .merge-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor: pointer; transition: all 0.1s; position: relative; }
+        .merge-item.selected { border-color: #ff477e; box-shadow: 0 0 10px rgba(255, 71, 126, 0.5); transform: scale(1.05); z-index: 5; }
+        .merge-item-rank { position: absolute; top: -8px; left: -8px; background: #b9a0e6; color: white; font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        /* ================= [ 💡 뷰 3: 캐릭터 꾸미기 뷰 (우측 패널 완벽 반영) ] ================= */
-        #view-character { flex-direction: column; height: 100%; background: #fff; overflow: hidden;}
-        .char-custom-layout { display: flex; flex-direction: row; height: 100%; width: 100%; }
+        .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; padding-bottom: 20px; }
+        .char-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; }
+        .char-item img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
+        .char-item .char-lv { font-size: 12px; font-weight: bold; color: #4a4e69; }
+
+        .shop-section { margin-bottom: 25px; text-align: left; }
+        .shop-section-title { font-size: 15px; font-weight: 800; color: #6a4c9c; margin-bottom: 10px; padding-left: 6px; border-left: 4px solid #b9a0e6; }
+        .btn-daily { width: 100%; background: #b9f6ca; border: 2px solid #69f0ae; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 900; color: #1b5e20; cursor: pointer; box-shadow: 0 4px 0 #69f0ae; transition: all 0.1s; margin-bottom: 20px;}
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .shop-item { background: #fff; border: 2px solid #e8dff5; border-radius: 12px; padding: 12px 5px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor: pointer; transition: all 0.1s; }
+        .shop-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .shop-item .item-amount { font-size: 15px; font-weight: 900; color: #4a4e69; margin-bottom: 8px; }
+        .shop-item .item-cost { font-size: 12px; font-weight: 800; background: #fdfbf7; padding: 4px 8px; border-radius: 10px; color: #d81b60; border: 1px solid #e8dff5; width: 95%; text-align: center;}
+        .item-cost.gold-cost { color: #d35400; }
+
+        #view-myroom { flex-direction: column; padding: 0; background: #fdfbf7; overflow: hidden; }
+        .myroom-top { flex: 1; width: 100%; position: relative; overflow: hidden; min-height: 40%; flex-shrink: 0; background: linear-gradient(to bottom, #fff0f5 0%, #fff0f5 55%, #e8dff5 55%, #e8dff5 100%); border-bottom: 4px solid #b9a0e6; display: flex; flex-direction: column; }
+        .myroom-top-title { position: absolute; top: 10px; left: 15px; font-size: 14px; font-weight: 800; color: #b9a0e6; background: rgba(255,255,255,0.8); padding: 4px 10px; border-radius: 12px; border: 1px solid #b9a0e6; z-index: 10; }
+        .myroom-bottom { flex: 1.2; width: 100%; padding: 15px; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; background: #fdfbf7; padding-bottom: 30px; }
+        .myroom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .myroom-info-title { font-size: 15px; font-weight: 800; color: #6a4c9c; border-left: 4px solid #b9a0e6; padding-left: 6px; }
+        .myroom-next-cost { font-size: 13px; font-weight: 800; color: #d35400; background: #fff59d; padding: 4px 10px; border-radius: 12px; border: 1px solid #f6c026; }
+        .room-shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-bottom: 20px; }
+        .room-shop-item { background: white; border: 2px solid #e8dff5; border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 0 #e8dff5; cursor:pointer; transition:all 0.1s; }
+        .room-shop-item:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .room-shop-item .emoji-icon { font-size: 35px; margin-bottom: 8px; line-height: 1; }
+        .room-shop-item .status { font-size: 11px; font-weight: 800; background: #fdfbf7; padding: 4px 0; border-radius: 8px; border: 1px solid #e8dff5; width: 90%; text-align: center;}
+        .room-shop-item .status.cost { color: #d35400; }
+        .room-shop-item.owned { filter: grayscale(0.2); opacity: 0.8; cursor: default; }
+
+        /* ================= [ 간식서리 미니게임 전용 UI (3x3 적용) ] ================= */
+        #minigame-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 4000; display: none; flex-direction: column; justify-content: center; align-items: center; color: #fff; padding: 20px; backdrop-filter: blur(5px); }
+        .reward-container { display: flex; gap: 8px; margin-top: 15px; width: 100%; max-width: 320px; justify-content: center; }
+        .reward-item { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 5px 8px; display: flex; flex-direction: column; align-items: center; font-size: 11px; filter: grayscale(1); opacity: 0.6; transition: all 0.3s ease; flex: 1; text-align: center; }
+        .reward-item .emoji { font-size: 20px; margin-bottom: 2px; }
+        .reward-item .gold { color: #f6e58d; font-weight: bold; }
+        .reward-item .count { font-size: 10px; color: #fff; margin-top: 2px; }
+        #minigame-result { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; font-weight: 900; text-align: center; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+        @keyframes popZoom { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .pop-zoom { animation: popZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
-        #char-preview-zone { flex: 1; position: relative; background: #e8dff5; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        #char-preview-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: all 0.3s;}
-        #char-preview-body { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; padding: 20px; transition: all 0.3s;}
-        
-        #char-toggle-btn {
-            position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 20;
-            background: rgba(255,255,255,0.9); color: #6a4c9c;
-            border: 2px solid #e8dff5; border-right: none; border-radius: 12px 0 0 12px;
-            width: 28px; height: 50px; font-size: 16px; font-weight: bold; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; padding: 0; box-shadow: -2px 0 5px rgba(0,0,0,0.15); transition: all 0.2s;
+        /* 💡 3x3 격자 스타일 적용 */
+        .memory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 280px; margin-top: 20px; }
+        .memory-card { aspect-ratio: 1; background: #b9a0e6; border-radius: 12px; font-size: 32px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 0 #8e7cc3; transition: transform 0.1s, background 0.2s; user-select: none; }
+        .memory-card:active { transform: scale(0.95); }
+        .memory-card.flipped { background: #fff; box-shadow: 0 4px 0 #ddd; cursor: default;}
+
+        /* ================= [ 하단 네비게이션 개편 ] ================= */
+        #bottom-nav {
+            flex-shrink: 0; height: 60px; background: #fff; border-top: 2px solid #e8dff5;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
         }
-        #char-toggle-btn:active { background: #fdfbf7; }
-
-        #char-right-panel { display: flex; flex-direction: row; width: 220px; transition: width 0.3s; background: #fff; border-left: 2px solid #e8dff5; overflow: hidden;}
-        #char-right-panel.hidden { width: 0; border-left: none; }
-
-        #char-item-zone { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
-        #char-item-title { padding: 12px; font-size: 14px; font-weight: 900; text-align: center; background: #fdfbf7; border-bottom: 2px solid #e8dff5; color: #6a4c9c; flex-shrink: 0;}
-        #char-item-list { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-content: start; }
-        
-        /* 💡 캐릭터 탭 내부는 티어 구분선 없이 하얀 박스 위주로 깔끔하게 */
-        .char-item-btn { aspect-ratio: 1; border: 2px solid #e8dff5; border-radius: 8px; background: #fafafa; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; font-weight: bold; color: #b9a0e6; overflow: hidden; position: relative; transition: all 0.1s; }
-        .char-item-btn:active { transform: scale(0.95); }
-        .char-item-btn.selected { border-color: #d81b60; background: #fff0f5; box-shadow: 0 0 8px rgba(216, 27, 96, 0.3); }
-        .char-item-btn img { width: 100%; height: 100%; object-fit: cover; pointer-events: none;}
-        .char-item-btn.contain-mode img { object-fit: contain; padding: 4px; }
-        .char-item-btn .count { position: absolute; top: -5px; right: -5px; background: #ff477e; color: #fff; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; z-index: 2;}
-        .char-item-btn.unowned { filter: grayscale(1); opacity: 0.38; cursor: not-allowed; }
-        .char-item-btn.unowned:active { transform: none; }
-        .char-tier-badge { position:absolute; left:4px; top:4px; z-index:3; font-size:9px; font-weight:900; color:#fff; background:rgba(0,0,0,.48); padding:2px 5px; border-radius:6px; }
-
-        .collection-tabs { display:flex; gap:6px; overflow-x:auto; padding:2px 0 12px; scrollbar-width:none; }
-        .collection-tabs::-webkit-scrollbar { display:none; }
-        .collection-tab { flex:0 0 auto; border:2px solid #e8dff5; background:#fff; color:#6a4c9c; border-radius:999px; padding:8px 11px; font-size:11px; font-weight:900; cursor:pointer; }
-        .collection-tab.active { background:#6a4c9c; color:#fff; border-color:#6a4c9c; }
-        .collection-summary { font-size:12px; font-weight:800; color:#6a4c9c; background:#f7f2ff; border:1px solid #e8dff5; border-radius:10px; padding:9px 10px; margin-bottom:12px; }
-        .inv-item .lock-mark { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:18px; pointer-events:none; }
-
-        #char-cat-zone { width: 70px; flex-shrink: 0; background: #fdfbf7; border-left: 1px solid #e8dff5; overflow-y: auto; display: flex; flex-direction: column; }
-        .cat-tab { padding: 14px 5px; text-align: center; font-size: 13px; font-weight: bold; color: #b2bec3; cursor: pointer; border-bottom: 1px solid #e8dff5; transition: all 0.2s; word-break: keep-all; }
-        .cat-tab.active { background: #d2bce3; color: #fff; border-bottom-color: #b9a0e6; }
-
-        /* ================= [ 뷰 4,5,6: 구슬 스킨, 배경, 아이템 (공통) ] ================= */
-        #view-skin, #view-bg, #view-item { flex-direction: column; height: 100%; background: #fdfbf7; }
-        .skin-equip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-        .skin-slot { background: #eee; border: 2px dashed #ccc; border-radius: 50%; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; transition: all 0.1s; }
-        .skin-slot:active { transform: scale(0.95); }
-        .skin-slot.selected-slot { border-color: #d81b60; box-shadow: 0 0 10px rgba(216,27,96,0.5); }
-        .skin-slot .level-badge { position: absolute; bottom: -5px; background: #6a4c9c; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; border: 1px solid #fff; z-index: 5; }
-        .skin-slot img { width: 90%; height: 90%; object-fit: contain; border-radius: 50%; pointer-events: none; }
-
-        /* V6: 구슬 스킨 2-Step UX */
-        .skin-step-label { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:900; color:#6a4c9c; background:#f3ecff; border:1px solid #e0d3f3; border-radius:999px; padding:5px 9px; margin-bottom:8px; }
-        .skin-selected-preview { display:flex; align-items:center; gap:14px; padding:12px; margin-bottom:12px; border:2px solid #e8dff5; border-radius:14px; background:linear-gradient(135deg,#fff,#faf6ff); }
-        .skin-selected-ball { width:72px; height:72px; flex:0 0 72px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 14px rgba(106,76,156,.18); position:relative; overflow:hidden; }
-        .skin-selected-ball img { width:88%; height:88%; object-fit:contain; pointer-events:none; }
-        .skin-selected-info { flex:1; min-width:0; }
-        .skin-selected-level { font-size:18px; font-weight:1000; color:#4a4e69; margin-bottom:4px; }
-        .skin-selected-desc { font-size:11px; line-height:1.45; color:#7f8c8d; }
-        .skin-equip-grid { grid-template-columns:repeat(6,1fr); gap:7px; }
-        .skin-slot { border-radius:14px; background:#f7f7f7; border:2px solid #e8dff5; }
-        .skin-slot.selected-slot { border-color:#d81b60; box-shadow:0 0 0 3px rgba(216,27,96,.12), 0 5px 12px rgba(216,27,96,.18); transform:translateY(-2px); }
-        .skin-slot.selected-slot .level-badge { background:#d81b60; }
-        .skin-equipped-badge { position:absolute; left:50%; bottom:3px; transform:translateX(-50%); z-index:4; white-space:nowrap; font-size:8px; font-weight:1000; color:white; background:#1dd1a1; border-radius:999px; padding:2px 5px; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-        .skin-card-hint { grid-column:1/-1; font-size:11px; color:#7f8c8d; background:#f8f5ff; border:1px dashed #d2bce3; border-radius:10px; padding:8px 10px; margin-bottom:2px; }
-
-        .craft-slots-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 12px; border: 2px solid #e8dff5;}
-        .craft-slot { background: #fdfbf7; border: 2px dashed #d2bce3; border-radius: 8px; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; position: relative; overflow: hidden;}
-        .craft-slot:active { transform: scale(0.95); }
-        .craft-slot.filled { border-style: solid; border-color: #3498db; background: #e1f5fe; }
-        .craft-slot img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
-
-        /* ================= [ 하단 네비게이션 (6개 탭) ] ================= */
-        #bottom-nav { flex-shrink: 0; height: 70px; background: #fff; border-top: 2px solid #e8dff5; display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; height: 100%; color: #b2bec3; font-size: 10px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-        .nav-item .icon { font-size: 20px; margin-bottom: 4px; transition: transform 0.2s; filter: grayscale(1); opacity: 0.6; }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex: 1; height: 100%; color: #b2bec3; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .nav-item .icon { font-size: 22px; margin-bottom: 2px; transition: transform 0.2s; filter: grayscale(1); opacity: 0.6; }
         .nav-item.active { color: #d81b60; }
-        .nav-item.active .icon { transform: translateY(-4px) scale(1.1); filter: grayscale(0); opacity: 1; }
+        .nav-item.active .icon { transform: translateY(-3px) scale(1.1); filter: grayscale(0); opacity: 1; }
 
-        .floating-text { position: absolute; font-weight: bold; font-size: 20px; color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; z-index: 5000; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center; }
+        .floating-text { position: absolute; font-weight: bold; font-size: 18px; color: #fff; text-shadow: -1px -1px 0 #4a4e69, 1px -1px 0 #4a4e69, -1px 1px 0 #4a4e69, 1px 1px 0 #4a4e69; pointer-events: none; z-index: 100; animation: floatUp 1s forwards ease-out; white-space: nowrap; text-align: center; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
-
-        /* ================= [ 오버레이 공통 & 가챠 팝업 ] ================= */
-        .overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0, 0, 0, 0.85); color: #fff; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 4500; display: none; backdrop-filter: blur(5px); }
-        .action-btn { margin-top:10px; padding: 12px 24px; font-size:15px; border-radius:12px; border:2px solid #b9a0e6; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer; transition: all 0.1s; box-shadow: 0 4px 0 #10ac84; width: 220px; }
+        
+        .overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.85); color: #4a4e69; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 2000; display: none; backdrop-filter: blur(5px); }
+        .action-btn { margin-top:10px; padding: 12px 24px; font-size:15px; border-radius:12px; border:2px solid #fff; background:#ffb3c6; color:white; font-weight:bold; cursor:pointer; transition: all 0.1s; }
         .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent !important; }
-        
-        #event-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:4500; display:none; }
-        #event-result { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); flex-direction:column; align-items:center; justify-content:center; width:100%; z-index:5000; text-align:center; color:white; display:none; }
-        
-        #gacha-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px; width: 90%; max-width: 360px;}
-        .gacha-item-reveal { animation: popZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
-        @keyframes popZoom { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-
-        /* ================= [ V3: 보스전 / SS 특수 연출 ] ================= */
-        #boss-hud { position:absolute; left:50%; top:7px; transform:translateX(-50%); width:56%; z-index:30; display:none; text-align:center; pointer-events:none; }
-        #boss-name { color:#fff; font-size:12px; font-weight:900; text-shadow:0 2px 3px rgba(0,0,0,.8); margin-bottom:3px; }
-        #boss-hp-track { height:12px; border:2px solid #fff; border-radius:10px; overflow:hidden; background:rgba(0,0,0,.45); box-shadow:0 2px 5px rgba(0,0,0,.35); }
-        #boss-hp-fill { height:100%; width:100%; background:linear-gradient(90deg,#ff7675,#d63031); transition:width .25s ease; }
-        #boss-hp-text { margin-top:2px; color:#fff; font-size:10px; font-weight:900; text-shadow:0 1px 2px #000; }
-        .boss-enemy { font-size:68px !important; filter:drop-shadow(0 0 10px #ff7675) drop-shadow(0 4px 4px rgba(0,0,0,.7)) !important; }
-        .ss-celebration { animation:ssPanelPulse 1.2s ease-in-out infinite alternate; border:3px solid #ffeaa7; border-radius:20px; padding:18px; background:radial-gradient(circle,rgba(255,234,167,.18),rgba(0,0,0,0)); }
-        .ss-special-title { font-size:32px; font-weight:1000; color:#fff3a0; text-shadow:0 0 8px #ffd32a,0 0 18px #ff9f1a,0 2px 2px #000; animation:ssTitle 0.65s ease-in-out infinite alternate; }
-        .ss-rays { font-size:28px; letter-spacing:8px; animation:ssSpin 3s linear infinite; margin-bottom:6px; }
-        @keyframes ssPanelPulse { from{box-shadow:0 0 12px rgba(255,234,167,.4)} to{box-shadow:0 0 38px rgba(255,193,7,.95)} }
-        @keyframes ssTitle { from{transform:scale(1)} to{transform:scale(1.08)} }
-        @keyframes ssSpin { from{transform:rotate(-4deg) scale(1)} 50%{transform:rotate(4deg) scale(1.08)} to{transform:rotate(-4deg) scale(1)} }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- 💡 상단 바 (에너지 완전 삭제, 타이머 복구) -->
+    <!-- 상단 바 -->
     <div id="top-bar">
-        <div class="stat-badge timer" id="top-gacha-timer">뽑기 ⏳ 10s</div>
+        <div class="profile-pic" id="top-profile-pic" onclick="openProfileSelect()">👩</div>
         <div class="top-stats">
-            <div class="stat-badge merge">🔄 <span id="val-merge">0</span></div>
-            <div class="stat-badge gold">🪙 <span id="val-gold">1,000</span></div>
+            <div class="stat-badge" id="energy-badge">
+                <div>⚡ <span id="val-energy">50 / 50</span></div>
+                <div id="recharge-info">⏳ 15s (+10)</div>
+            </div>
+            <div class="stat-badge">🪙 <span id="val-gold">10,000</span></div>
+            <div class="stat-badge" id="shield-badge" style="gap:2px;"></div>
         </div>
+        <div class="settings-btn" onclick="openSettings()">⚙️</div>
     </div>
 
     <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
-        
-        <!-- 💡 뷰 1: 상점 (통합 뽑기 & 합성소 완벽 단일화) -->
-        <div id="view-shop" class="view-container">
-            <div class="shop-banner">
-                <h1>럭키 통합 상점! 🎉</h1>
-                <div style="font-size:13px; margin-bottom:10px;">스킨, 캐릭터, 배경, 아이템이 쏟아집니다!</div>
-                <div class="shop-rates">
-                    <span class="c">C: 90%</span> <span class="b">B: 9.5%</span> <span class="a">A: 0.49%</span> <span class="s">S: 0.49%</span> <span class="ss">SS: 0.0002%</span>
-                </div>
-                <div style="font-size:10px; opacity:.85; margin-top:6px;">※ 입력 확률 합계가 100%를 초과하여 동일 비율 가중치로 정규화 추첨</div>
-            </div>
-            
-            <div class="gacha-btn-container">
-                <!-- 💡 단일 뽑기 버튼 (골드100, 머지50, 타이머10초) -->
-                <button class="btn-gacha" id="btn-pull-gacha" onclick="pullGacha(1)">
-                    <div class="title">🎁 통합 1회 뽑기</div>
-                    <div class="cost-row">
-                        <div class="cost"><span style="color:#d35400;">🪙 100</span></div>
-                        <div class="cost"><span style="color:#6a4c9c;">🔄 50</span></div>
-                        <div class="cost"><span id="gacha-timer-display" style="color:#27ae60;">⏳ 10s</span></div>
-                    </div>
-                </button>
-                <button class="btn-gacha" id="btn-test-gacha" onclick="grantTestItems(10)" style="border-color:#74b9ff; box-shadow:0 6px 0 #0984e3;">
-                    <div class="title" style="color:#0984e3;">🧪 테스트 10개 지급</div>
-                    <div class="cost-row"><div class="cost"><span style="color:#0984e3;">무료 · 쿨타임 없음</span></div></div>
-                </button>
-                <button class="btn-gacha" id="btn-buy-merge" onclick="buyMergePack()" style="border-color:#a29bfe; box-shadow:0 6px 0 #6c5ce7;">
-                    <div class="title" style="color:#6c5ce7;">🔄 머지 팩 구매</div>
-                    <div class="cost-row">
-                        <div class="cost"><span style="color:#d35400;">🪙 1,000</span></div>
-                        <div class="cost"><span style="color:#6a4c9c;">➜ 🔄 10</span></div>
-                        <div class="cost"><span id="merge-pack-limit" style="color:#6c5ce7;">오늘 0/5</span></div>
-                    </div>
-                </button>
-            </div>
-
-            <!-- 💡 통합 합성소 패널 -->
-            <div class="panel" style="background:#f1f8ff; margin: 0 15px 20px 15px;">
-                <div class="panel-title" style="font-size:15px; color:#3498db;">
-                    <span>🛠️ 통합 합성소 (10 ➔ 1)</span>
-                    <span style="font-size:11px; color:#999; font-weight:normal;">같은 등급 10개 ➔ 상위 등급 1개</span>
-                </div>
-                <div class="craft-slots-container" id="global-craft-slots"></div>
-                <div style="display:flex; gap:10px;">
-                    <button class="action-btn-sub" onclick="autoFillGlobalCraft()">⚡ 자동 채우기</button>
-                    <button class="action-btn-sub" onclick="clearGlobalCraft()">🗑️ 비우기</button>
-                    <button class="action-btn-main" style="background:#3498db; color:#fff; border-color:#2980b9; box-shadow:0 4px 0 #2980b9; margin-bottom:0; flex:1.5;" onclick="confirmGlobalCraft()">합성 확인</button>
-                </div>
-            </div>
-
-            <!-- 통합 합성 가능 인벤토리 -->
-            <div class="panel" style="margin: 0 15px 30px 15px;">
-                <div class="panel-title">합성 가능 목록 <span style="font-size:11px; font-weight:normal; color:#999;">여유분 2개 이상만 표시</span></div>
-                <div class="inventory-grid" id="global-inventory-grid"></div>
+        <!-- 뷰 1: 로비 -->
+        <div id="view-lobby" class="view-container active">
+            <div class="lobby-title-bar">나만의 로비</div>
+            <div class="lobby-char-container" id="lobby-touch-area">
+                <div class="lobby-nav-btn lobby-prev" onclick="prevLobbyChar()">◀</div>
+                <img id="lobby-char-img" class="lobby-char" src="images/character/lobby/animal/01.png" alt="Lobby Character">
+                <div class="lobby-nav-btn lobby-next" onclick="nextLobbyChar()">▶</div>
             </div>
         </div>
 
-        <!-- 💡 뷰 2: 전투 & 머지 화면 -->
-        <div id="view-battle" class="view-container active">
+        <!-- 뷰 2: 전투 -->
+        <div id="view-battle" class="view-container">
             <div id="board-section">
                 <div id="battle-stage">
-                    <img id="hero" class="hero" src="images/character/battle/01_Idle.png" onerror="this.style.display='none'">
-                    <div id="boss-hud">
-                        <div id="boss-name">👑 TEST BOSS</div>
-                        <div id="boss-hp-track"><div id="boss-hp-fill"></div></div>
-                        <div id="boss-hp-text">250 / 250</div>
-                    </div>
+                    <img id="hero" class="hero" src="images/character/battle/01_Idle.png" alt="Hero">
                     <div id="enemy" class="character enemy">🦇</div>
                 </div>
             </div>
             <div id="game-section">
-                <!-- 💡 캔버스 오류 원천 방지를 위한 명시적 크기 고정 -->
-                <div id="merge-box">
-                    <div id="physics-bg"></div>
-                    <div id="physics-guide"></div>
-                    <div id="physics-area"></div>
+                <div id="physics-area">
+                    <div id="fever-banner">🔥 피버 모드! 에너지 소모 무료 (10s)</div>
                     <div id="deadline-line"></div>
                     <div id="warning-banner">⚠️ 위험! 5.0초</div>
+                    <div id="wipeout-anim">💥</div>
                     <div id="drop-line"></div>
-                    <div id="preview-ball"></div>
-                    <!-- 클릭 전담 투명 레이어 -->
-                    <div id="touch-catcher"></div>
+                    <img id="preview-ball" src="" alt="preview">
                 </div>
-                <div id="ui-section">                
-                    <div class="item-group">
-                        <button class="btn-item btn-mult" id="btn-mult" onclick="toggleMultiplier()">
-                            <span class="icon-main" id="mult-label">x1</span><div class="cost-label" id="mult-cost">무료</div>
-                        </button>
-                        <!-- 전투 아이템 골드 비용 -->
-                        <button class="btn-item btn-hammer" onclick="useItem('hammer')">
-                            <span class="icon-main">🔨</span>망치
-                            <div class="cost-label" style="color:#d35400;">🪙 100</div>
-                        </button>
-                        <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
-                            <span class="icon-main" style="font-size: 24px; margin-top:-2px;">🤖</span><div id="auto-label">오토: OFF</div>
-                        </button>
-                        <button class="btn-item btn-shake" onclick="useItem('shake')">
-                            <span class="icon-main">🌪️</span>쉐이크
-                            <div class="cost-label" style="color:#d35400;">🪙 200</div>
-                        </button>
-                        <button class="btn-item btn-tornado" id="btn-tornado" onclick="useItem('tornado')">
-                            <span class="icon-main">🌀</span>토네이도
-                            <div class="cost-label" style="color:#d35400;">🪙 300</div>
-                        </button>
-                    </div>
+            </div>
+            <div id="ui-section">                
+                <div class="item-group">
+                    <button class="btn-item btn-mult" id="btn-mult" onclick="toggleMultiplier()">
+                        <span class="icon-main" id="mult-label">x1</span><div style="font-size:10px">배수</div>
+                    </button>
+                    <button class="btn-item btn-hammer" onclick="useItem('hammer')">
+                        <span class="icon-main">🔨</span>망치
+                        <div class="cost-label">⚡ 10</div>
+                    </button>
+                    <button class="btn-item btn-auto" id="btn-auto" onclick="toggleAutoDrop()">
+                        <span class="icon-main" style="font-size: 20px; margin-top:-2px;">🤖</span><div id="auto-label">오토: OFF</div>
+                    </button>
+                    <button class="btn-item btn-shake" onclick="useItem('shake')">
+                        <span class="icon-main">🌪️</span>쉐이크
+                        <div class="cost-label">⚡ 10</div>
+                    </button>
+                    <button class="btn-item btn-tilt" id="btn-tilt" onclick="useItem('tilt')">
+                        <span class="icon-main">📱</span>
+                        <div id="tilt-label">자이로</div>
+                        <div id="tilt-timer" style="display:none; color:#fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);">10.0s</div>
+                        <div class="cost-label" id="tilt-cost">⚡ 10</div>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 💡 뷰 3: 캐릭터 꾸미기 (스크린샷 레이아웃 완벽 반영) -->
+        <!-- 뷰 3: 캐릭터 도감 -->
         <div id="view-character" class="view-container">
-            <div class="char-custom-layout">
-                <div id="char-preview-zone">
-                    <img id="char-preview-bg" src="images/bg/lobby/01.png" onerror="this.style.display='none'">
-                    <img id="char-preview-body" src="images/character/lobby/body/01.png" onerror="this.style.display='none'">
-                    <button id="char-toggle-btn" onclick="toggleCharItemZone()">◀</button>
-                </div>
-                <!-- 💡 우측 패널 (아이템 리스트 + 탭) -->
-                <div id="char-right-panel">
-                    <div id="char-item-zone">
-                        <div id="char-item-title">배경</div>
-                        <div id="char-item-list"></div>
+            <div class="view-title">도감 - 전체 캐릭터</div>
+            <div class="view-content">
+                <div style="color: #8e7cc3; font-weight: bold; margin-bottom: 10px;">합성을 통해 모든 캐릭터를 수집해 보세요!</div>
+                <div class="char-grid" id="char-grid-container"></div>
+            </div>
+        </div>
+
+        <!-- 뷰 4: 상점 -->
+        <div id="view-shop" class="view-container">
+            <div class="view-title">상점</div>
+            <div class="view-content" style="display:block; text-align: left;">
+                <button class="btn-daily" id="btn-daily" onclick="claimDailyReward()">
+                    🎁 일일 보상 받기<br>
+                    <span style="font-size:13px; font-weight:bold; color:#27ae60;">에너지 +50 / 골드 +100</span>
+                </button>
+                <div class="shop-section">
+                    <div class="shop-section-title">⚡ 에너지 구매</div>
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="buyEnergy(100, 1000)"><div class="item-amount">100 ⚡</div><div class="item-cost gold-cost">1,000 🪙</div></div>
+                        <div class="shop-item" onclick="buyEnergy(200, 2000)"><div class="item-amount">200 ⚡</div><div class="item-cost gold-cost">2,000 🪙</div></div>
+                        <div class="shop-item" onclick="buyEnergy(300, 3000)"><div class="item-amount">300 ⚡</div><div class="item-cost gold-cost">3,000 🪙</div></div>
                     </div>
-                    <div id="char-cat-zone"></div>
+                </div>
+                <div class="shop-section">
+                    <div class="shop-section-title">🪙 골드 환전</div>
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="buyGold(1000, 100)"><div class="item-amount">1,000 🪙</div><div class="item-cost">100 ⚡</div></div>
+                        <div class="shop-item" onclick="buyGold(2000, 200)"><div class="item-amount">2,000 🪙</div><div class="item-cost">200 ⚡</div></div>
+                        <div class="shop-item" onclick="buyGold(3000, 300)"><div class="item-amount">3,000 🪙</div><div class="item-cost">300 ⚡</div></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 💡 뷰 4: 구슬 스킨 -->
-        <div id="view-skin" class="view-container">
-            <div class="view-title">구슬 스킨 관리</div>
-            <div class="view-content">
-                <div class="panel">
-                    <div class="skin-step-label">① 적용할 구슬 레벨 선택</div>
-                    <div id="skin-selected-preview" class="skin-selected-preview"></div>
-                    <div class="skin-equip-grid" id="skin-equip-grid"></div>
+        <!-- 뷰 5: 마이룸 -->
+        <div id="view-myroom" class="view-container">
+            <div class="myroom-top" id="myroom-display"></div>
+            <div class="myroom-bottom">
+                <div class="myroom-info">
+                    <div class="myroom-info-title">가구/소품 상점</div>
+                    <div class="myroom-next-cost">다음 구매: <span id="next-item-cost">100</span> 🪙</div>
                 </div>
-                <div class="panel">
-                    <div class="skin-step-label">② 장착할 스킨 선택</div>
-                    <div class="panel-title" style="margin-top:0;">스킨 컬렉션 <span style="font-size:11px; font-weight:normal; color:#999;">컬러 = 보유 · 회색 = 미보유</span></div>
-                    <div class="inventory-grid" id="skin-inventory-grid"></div>
+                <div class="room-shop-grid" id="myroom-grid"></div>
+            </div>
+        </div>
+
+        <!-- 뷰 6: 설정 -->
+        <div id="view-settings" class="view-container" style="z-index: 100;">
+            <div class="view-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span onclick="closeSettings()" style="cursor:pointer; font-size:20px;">🔙</span>
+                <span>설정</span>
+                <span style="visibility:hidden; font-size:20px;">🔙</span>
+            </div>
+            <div class="view-content" style="text-align:left;">
+                <div class="settings-section">
+                    <div class="section-title">프로필</div>
+                    <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
+                        <div class="profile-pic" id="settings-profile-pic" onclick="openProfileSelect()" style="width:65px; height:65px; font-size:35px; cursor:pointer; flex-shrink:0;">👩</div>
+                        <div style="flex:1;">
+                            <div style="font-size:18px; font-weight:bold; color:#4a4e69; display:flex; align-items:center; gap:5px;">
+                                <span id="settings-user-name">Merge & Roll</span>
+                                <span onclick="changeUserName()" style="cursor:pointer; font-size:14px;">✏️</span>
+                            </div>
+                            <div style="font-size:12px; color:#b2bec3; margin-top:4px;">이미지를 터치해 프사를 변경하세요</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section" style="margin-top:20px;">
+                    <div class="section-title">나의 쇼룸</div>
+                    <div>
+                        <button class="showroom-btn" onclick="alert('아직 준비중입니다. 🛠️')">⚔️ 전투 캐릭터 변경</button>
+                        <button class="showroom-btn" onclick="alert('아직 준비중입니다. 🛠️')">🏞️ 전투 배경 변경</button>
+                        <button class="showroom-btn" onclick="openMergeOrder()">🔄 합성 순서 변경</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 💡 뷰 5: 배경 스킨 (3분할 탭) -->
-        <div id="view-bg" class="view-container">
-            <div class="view-title">배경 스킨 설정</div>
-            <div class="view-content">
-                <div class="panel">
-                    <div class="panel-title">전투 배경 (Battle)</div>
-                    <div class="inventory-grid" id="bg-battle-grid"></div>
-                </div>
-                <div class="panel">
-                    <div class="panel-title">머지 배경 (Merge)</div>
-                    <div class="inventory-grid" id="bg-merge-grid"></div>
-                </div>
-                <div class="panel">
-                    <div class="panel-title">머지 테두리 (Border)</div>
-                    <div class="inventory-grid" id="bg-border-grid"></div>
-                </div>
+        <!-- 뷰 7: 합성 순서 변경 -->
+        <div id="view-merge-order" class="view-container" style="z-index: 110;">
+            <div class="view-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span onclick="closeMergeOrder()" style="cursor:pointer; font-size:14px;">취소</span>
+                <span>합성 순서 변경</span>
+                <span onclick="saveMergeOrder()" style="cursor:pointer; font-size:14px; color:#f6e58d;">저장</span>
             </div>
-        </div>
-
-        <!-- 뷰 6: 전체 컬렉션 -->
-        <div id="view-item" class="view-container">
-            <div class="view-title">아이템 컬렉션</div>
             <div class="view-content">
-                <div class="panel">
-                    <div class="panel-title"><span>획득 가능 아이템 도감</span><span style="font-size:11px; font-weight:normal; color:#999;">미획득도 회색으로 표시</span></div>
-                    <div class="collection-tabs" id="item-category-tabs"></div>
-                    <div class="collection-summary" id="item-collection-summary">컬렉션을 불러오는 중...</div>
-                    <div class="inventory-grid" id="item-collection-grid"></div>
+                <div style="color: #d81b60; font-weight: bold; font-size:12px; margin-bottom: 15px; background:#fdfbf7; border:1px solid #ffb3c6; padding:8px; border-radius:8px; line-height:1.4;">
+                    바꿀 구슬을 선택한 후, 이동할 위치의 구슬을 선택해 서로 <b>교체(Swap)</b> 하세요.
                 </div>
+                <div class="char-grid" id="merge-order-grid"></div>
             </div>
         </div>
     </div>
 
-    <!-- 하단 네비게이션 (6개 탭) -->
+    <!-- 하단 공통 네비게이션 바 -->
     <div id="bottom-nav">
         <div class="nav-item" id="nav-shop" onclick="switchMenu('shop')"><div class="icon">🛒</div><div>상점</div></div>
-        <div class="nav-item active" id="nav-battle" onclick="switchMenu('battle')"><div class="icon">⚔️</div><div>전투</div></div>
         <div class="nav-item" id="nav-character" onclick="switchMenu('character')"><div class="icon">🐾</div><div>캐릭터</div></div>
-        <div class="nav-item" id="nav-skin" onclick="switchMenu('skin')"><div class="icon">🔮</div><div>구슬 스킨</div></div>
-        <div class="nav-item" id="nav-bg" onclick="switchMenu('bg')"><div class="icon">🖼️</div><div>배경</div></div>
-        <div class="nav-item" id="nav-item" onclick="switchMenu('item')"><div class="icon">🛋️</div><div>아이템</div></div>
+        <div class="nav-item active" id="nav-lobby" onclick="switchMenu('lobby')"><div class="icon">🏛️</div><div>로비</div></div>
+        <div class="nav-item" id="nav-battle" onclick="switchMenu('battle')"><div class="icon">⚔️</div><div>전투</div></div>
+        <div class="nav-item" id="nav-myroom" onclick="switchMenu('myroom')"><div class="icon">🛋️</div><div>마이룸</div></div>
     </div>
-    
-    <!-- 통합 가챠 연출 오버레이 -->
-    <div id="event-overlay">
-        <div id="event-result"></div>
-    </div>
-    
-    <!-- 게임오버 오버레이 -->
-    <div id="overlay-gameover" class="overlay">
-        <div style="font-size: 50px; margin-bottom: 15px;">💥</div>
-        <div style="font-size: 28px; font-weight: bold; margin-bottom: 10px; color:#ff7675;">게임 오버!</div>
-        <div style="font-size: 16px; margin-bottom: 30px; text-align:center; line-height:1.4;">
-            과일판이 꽉 차서 싹쓸이 되었습니다.<br>
-            <b style="color:#f6e58d;"><span id="go-timer">3</span>초 후 자동 시작됩니다.</b>
+
+    <!-- 💡 간식서리 미니게임 오버레이 (3x3 격자 적용, 꽝 삭제) -->
+    <div id="minigame-overlay">
+        <div style="font-size: 24px; font-weight: bold; color: #f6e58d;">🥨 간식서리 이벤트! 🥨</div>
+        <div style="font-size: 13px; color: #ddd; margin-top: 5px; text-align: center;">같은 간식을 3개 맞추면 보상 획득!</div>
+        
+        <div class="reward-container">
+            <div class="reward-item" id="reward-🍰"><div class="emoji">🍰</div><div class="gold">200🪙</div><div class="count" id="count-🍰">0/3</div></div>
+            <div class="reward-item" id="reward-🍕"><div class="emoji">🍕</div><div class="gold">150🪙</div><div class="count" id="count-🍕">0/3</div></div>
+            <div class="reward-item" id="reward-🍿"><div class="emoji">🍿</div><div class="gold">100🪙</div><div class="count" id="count-🍿">0/3</div></div>
         </div>
-        <button class="action-btn" style="padding: 12px 24px; font-size:15px; border-radius:12px; border:2px solid #b9a0e6; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer;" onclick="instantRestart()">🔄 즉시 재시작</button>
+        <div class="memory-grid" id="memory-grid"></div>
+    </div>
+    <div id="minigame-result"></div>
+
+    <!-- 전투 중 발생하는 알림/잠시멈춤 전용 오버레이 -->
+    <div id="event-overlay" class="overlay" style="background:rgba(0,0,0,0.6); z-index:4500; display:none;"></div>
+    <div id="event-result" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); flex-direction:column; align-items:center; justify-content:center; width:100%; z-index:5000; text-align:center; color:white; display:none;"></div>
+
+    <!-- 프로필 이미지 선택 오버레이 -->
+    <div id="overlay-profile-select" class="overlay" style="background:rgba(0,0,0,0.7); z-index: 3000;">
+        <div style="background:#fff; width:90%; border-radius:16px; padding:20px; text-align:center;">
+            <h3 style="margin-top:0; color:#4a4e69;">프로필 이미지 선택</h3>
+            <div class="char-grid" id="profile-select-grid" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
+            <button class="action-btn" onclick="closeProfileSelect()" style="width:100%; margin-top:0;">닫기</button>
+        </div>
+    </div>
+
+    <!-- 위기 탈출 오버레이 -->
+    <div id="overlay-crisis" class="overlay">
+        <div style="font-size: 28px; font-weight: bold; margin-bottom: 10px; color:#d81b60;">🚨 위기 발생! 🚨</div>
+        <div style="font-size: 14px; margin-bottom: 25px; text-align:center; line-height:1.4;">비상 탈출 시 <b style="color:#d81b60">10초간 피버 모드</b>가 발동되며<br>과일판을 유지할 수 있습니다!</div>
+        <button class="action-btn" style="background:#1dd1a1; box-shadow: 0 4px 0 #10ac84; width: 220px;" onclick="rescueGame()">🔥 비상 탈출 (⚡ 3)</button>
+        <button class="action-btn" style="background:#b2bec3; box-shadow: 0 4px 0 #636e72; width: 220px;" onclick="giveUpGame()">💥 싹쓸이 재시작 (⚡ 10)</button>
     </div>
 </div>
 
 <script>
-    // ================= [ 글로벌 상태 선언 ] =================
-    let globalPause = false;
+    // 전역 상태 변수
+    let energy = 50; 
+    let gold = 10000; 
+    let shields = 4;
+    const MAX_SHIELDS = 4;
+
+    let multiplier = 1;
+    let itemCost = 10; 
+    let currentMenu = 'lobby'; 
+    let previousMenu = 'lobby'; 
+    const COST_REVIVE = 3;
+    const COST_RESTART = 10;
+
+    let isDailyClaimed = false; 
+
+    // 프로필 정보
+    let userName = "Merge & Roll";
+    let profileImgSrc = null;
+
+    // 마이룸 이모지 관리
+    let roomItemsOwned = new Array(12).fill(false);
+    let nextRoomCost = 100; 
+    const ROOM_EMOJIS = ['🪴', '🧸', '📚', '☕', '📺', '🎸', '🕹️', '🐈', '🖼️', '🕰️', '🛋️', '🛏️'];
+    const roomPositions = [
+        { left: '15%', top: '40%', z: 1 }, { left: '40%', top: '42%', z: 1 }, { left: '65%', top: '40%', z: 1 }, { left: '85%', top: '45%', z: 1 },
+        { left: '20%', top: '60%', z: 2 }, { left: '50%', top: '62%', z: 2 }, { left: '75%', top: '60%', z: 2 }, { left: '10%', top: '75%', z: 3 },
+        { left: '35%', top: '78%', z: 3 }, { left: '60%', top: '75%', z: 3 }, { left: '85%', top: '80%', z: 3 }, { left: '45%', top: '85%', z: 4 }
+    ];
+
+    const DEADLINE_Y = 45; 
+    let isGameOver = false;
+    let isWarning = false;
+    let isCrisis = false; 
+    let warningTimeRemaining = 5.0;
+    let warningInterval = null;
+
+    let isFeverMode = false;
+    let feverTime = 0;
+    let feverInterval = null;
+
+    let energyTimeRemaining = 15;
+    let isTiltActive = false;
+    let tiltInterval = null;
+    let isAutoDrop = false;
+    let autoDropTimer = null;
+    
     let isBattling = false;
-    let mergeCount = 0; 
-    let gold = 1000;
+    let isMinigameActive = false;
+    let isEventPause = false; 
 
-    // 보스 진행도는 "현재 보유 머지"와 분리해 누적 획득량으로 관리
-    let totalMergeEarned = 0;
-    const BOSS_MERGE_INTERVAL = 10; // TEST: 실제 서비스에서는 1000으로 변경
-    let nextBossAt = BOSS_MERGE_INTERVAL;
-    let bossActive = false;
-    let bossMaxHp = 250;
-    let bossHp = bossMaxHp;
-    let firstRewardForcesSS = true;
+    const multList = [1, 2, 5, 10];
+    let multIndex = 0;
 
-    const uiMerge = document.getElementById('val-merge');
+    const uiEnergy = document.getElementById('val-energy');
     const uiGold = document.getElementById('val-gold');
+    const overlayCrisis = document.getElementById('overlay-crisis');
+    const warningBanner = document.getElementById('warning-banner');
+    const feverBanner = document.getElementById('fever-banner');
+    const wipeoutAnim = document.getElementById('wipeout-anim');
+    const appContainer = document.getElementById('app');
+    
+    const heroEl = document.getElementById('hero');
+    const enemyEl = document.getElementById('enemy');
 
-    function updateTopUI() {
-        uiMerge.innerText = mergeCount.toLocaleString();
-        uiGold.innerText = gold.toLocaleString();
-        updateGachaUI(); // 상태 변경 시 버튼 상태 업데이트
-        if (typeof updateMergePackUI === 'function') updateMergePackUI();
-    }
+    // 구슬 데이터
+    const baseImgSize = 256;
+    let LEVELS = [
+        { radius: 12, img: 'images/bead/animal/lv01.png' }, { radius: 18, img: 'images/bead/animal/lv02.png' },
+        { radius: 25, img: 'images/bead/animal/lv03.png' }, { radius: 33, img: 'images/bead/animal/lv04.png' },
+        { radius: 42, img: 'images/bead/animal/lv05.png' }, { radius: 52, img: 'images/bead/animal/lv06.png' },
+        { radius: 62, img: 'images/bead/animal/lv07.png' }, { radius: 75, img: 'images/bead/animal/lv08.png' },
+        { radius: 90, img: 'images/bead/animal/lv09.png' }, { radius: 108, img: 'images/bead/animal/lv10.png' },
+        { radius: 125, img: 'images/bead/animal/lv11.png' }, { radius: 145, img: 'images/bead/animal/lv12.png' }
+    ].map(level => { level.scale = (level.radius * 2) / baseImgSize; return level; });
 
+    let tempImgs = []; let tempOwned = []; let tempEmojis = []; let selectedMergeIndex = -1;
 
-    function setGlobalPause(paused) {
-        globalPause = !!paused;
-        if (window.gameRunner) window.gameRunner.enabled = !globalPause;
-        if (typeof updatePreview === 'function') updatePreview();
-    }
-    window.setGlobalPause = setGlobalPause;
-
-
-    function updateBossHud() {
-        const hud = document.getElementById('boss-hud');
-        const fill = document.getElementById('boss-hp-fill');
-        const text = document.getElementById('boss-hp-text');
-        if (!hud || !fill || !text) return;
-        hud.style.display = bossActive ? 'block' : 'none';
-        const pct = Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100));
-        fill.style.width = pct + '%';
-        text.innerText = `${Math.max(0, Math.ceil(bossHp))} / ${bossMaxHp}`;
-    }
-
-    function startBossBattle() {
-        if (bossActive) return;
-        bossActive = true;
-        bossMaxHp = 250; // TEST HP
-        bossHp = bossMaxHp;
-        isBattling = false;
-        const enemy = document.getElementById('enemy');
-        if (enemy) { enemy.innerText = '👹'; enemy.className = 'character enemy slide-in boss-enemy'; }
-        updateBossHud();
-        showFloatingText('👑 보스 출현! 머지로 공격하세요!', 210, 105, '#ffeaa7');
-    }
-
-    function checkBossTrigger() {
-        if (!bossActive && totalMergeEarned >= nextBossAt) startBossBattle();
-    }
-
-    function awardMerge(amount, source='획득') {
-        amount = Math.max(0, Math.floor(Number(amount) || 0));
-        if (!amount) return;
-        mergeCount += amount;
-        totalMergeEarned += amount;
-        updateTopUI();
-        checkBossTrigger();
-    }
-
-    function damageBoss(amount, rewardMultiplier=1) {
-        if (!bossActive) return false;
-        const mult = Math.max(1, Math.floor(Number(rewardMultiplier) || 1));
-        const finalDamage = Math.max(1, Math.floor(amount)) * mult;
-        bossHp -= finalDamage;
-        updateBossHud();
-        showFloatingText(`BOSS -${finalDamage} HP${mult>1 ? ` (x${mult})` : ''}`, 245, 105, '#ff7675');
-        if (bossHp <= 0) {
-            bossActive = false;
-            nextBossAt += BOSS_MERGE_INTERVAL;
-            const bossReward = 1000 * mult;
-            gold += bossReward;
-            updateTopUI(); updateBossHud();
-            const enemy = document.getElementById('enemy');
-            if (enemy) { enemy.className = 'character enemy explode'; setTimeout(()=>{ enemy.className='character enemy'; },500); }
-            showFloatingText(`🏆 BOSS DOWN! +${bossReward.toLocaleString()} 🪙${mult>1 ? ` x${mult}` : ''}`, 210, 105, '#ffeaa7');
-            setTimeout(checkBossTrigger, 600);
-            return true;
+    function updateShieldUI() {
+        let html = '';
+        for(let i = 0; i < MAX_SHIELDS; i++) {
+            if(i < shields) html += '<span style="font-size:12px;">🐶</span>';
+            else html += '<span style="font-size:12px; opacity:0.3; filter:grayscale(1);">🐶</span>';
         }
-        return false;
+        document.getElementById('shield-badge').innerHTML = html;
     }
 
-    const MERGE_PACK_DAILY_LIMIT = 5;
-    const MERGE_PACK_STORAGE_KEY = 'mergeRoll.mergePackDaily.v1';
-    let mergePackDaily = { date: '', count: 0 };
-
-    function getLocalDayKey() {
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth()+1).padStart(2,'0');
-        const day = String(d.getDate()).padStart(2,'0');
-        return `${y}-${m}-${day}`;
-    }
-
-    function loadMergePackDaily() {
-        const today = getLocalDayKey();
-        try {
-            const saved = JSON.parse(localStorage.getItem(MERGE_PACK_STORAGE_KEY) || 'null');
-            if (saved && saved.date === today) mergePackDaily = { date: today, count: Math.max(0, Number(saved.count)||0) };
-            else mergePackDaily = { date: today, count: 0 };
-        } catch (e) {
-            mergePackDaily = { date: today, count: 0 };
-        }
-    }
-
-    function saveMergePackDaily() {
-        try { localStorage.setItem(MERGE_PACK_STORAGE_KEY, JSON.stringify(mergePackDaily)); } catch (e) {}
-    }
-
-    function ensureMergePackDay() {
-        const today = getLocalDayKey();
-        if (mergePackDaily.date !== today) {
-            mergePackDaily = { date: today, count: 0 };
-            saveMergePackDaily();
-        }
-    }
-
-    function updateMergePackUI() {
-        ensureMergePackDay();
-        const btn = document.getElementById('btn-buy-merge');
-        const label = document.getElementById('merge-pack-limit');
-        const remaining = Math.max(0, MERGE_PACK_DAILY_LIMIT - mergePackDaily.count);
-        if (label) label.innerText = remaining > 0 ? `오늘 ${mergePackDaily.count}/${MERGE_PACK_DAILY_LIMIT} · ${remaining}회 남음` : `오늘 ${MERGE_PACK_DAILY_LIMIT}/${MERGE_PACK_DAILY_LIMIT} · 판매 종료`;
-        if (btn) {
-            btn.disabled = mergePackDaily.count >= MERGE_PACK_DAILY_LIMIT || gold < 1000;
-            btn.title = mergePackDaily.count >= MERGE_PACK_DAILY_LIMIT ? '오늘 구매 가능 횟수를 모두 사용했습니다.' : `오늘 ${remaining}회 구매 가능`;
-        }
-    }
-    window.updateMergePackUI = updateMergePackUI;
-
-    window.buyMergePack = function() {
-        if (globalPause) return;
-        ensureMergePackDay();
-        if (mergePackDaily.count >= MERGE_PACK_DAILY_LIMIT) {
-            showFloatingText('오늘 머지 팩은 5회 모두 구매했습니다!', 210, 400, '#ff7675');
-            updateMergePackUI();
-            return;
-        }
-        if (gold < 1000) { showFloatingText('골드가 부족합니다! 🪙 1,000', 210, 400, '#ff7675'); return; }
-        gold -= 1000;
-        mergePackDaily.count += 1;
-        saveMergePackDaily();
-        awardMerge(10, '상점');
-        updateTopUI();
-        updateMergePackUI();
-        showFloatingText(`🔄 머지 +10 · 오늘 ${mergePackDaily.count}/${MERGE_PACK_DAILY_LIMIT}`, 210, 400, '#6a4c9c');
-    };
-
-    // ================= [ 💡 타이머 시스템 복구 (10초 대기) ] =================
-    let gachaTimer = 10; 
-    let isGachaReady = false; // 게임 시작과 동시에 10초 카운트다운
+    function updateEnergyUI() { uiEnergy.innerText = energy + " / 50"; uiGold.innerText = gold.toLocaleString(); }
+    updateEnergyUI(); updateShieldUI();
 
     setInterval(() => {
-        if (globalPause) return;
-        if (!isGachaReady) {
-            gachaTimer--;
-            if (gachaTimer <= 0) { isGachaReady = true; gachaTimer = 10; }
-        }
-        updateGachaUI();
+        const info = document.getElementById('recharge-info');
+        if (energy < 50) {
+            info.style.visibility = 'visible'; energyTimeRemaining--;
+            if (energyTimeRemaining <= 0) {
+                energy += 10; if (energy > 50) energy = 50; updateEnergyUI();
+                showFloatingText(`에너지 +10 ⚡`, window.innerWidth/2 - 40, 50, '#1dd1a1');
+                energyTimeRemaining = 15;
+            }
+            info.innerText = `⏳ ${energyTimeRemaining}s (+10)`;
+        } else { info.style.visibility = 'hidden'; energyTimeRemaining = 15; }
     }, 1000);
 
-    function updateGachaUI() {
-        const btn = document.getElementById('btn-pull-gacha');
-        const timerDisplay = document.getElementById('gacha-timer-display');
-        const topTimer = document.getElementById('top-gacha-timer');
+    // ================= [ 로비 스와이프 및 캐릭터 관리 스크립트 ] =================
+    const lobbyChars = [
+        'images/character/lobby/animal/01.png',
+        'images/character/lobby/animal/02.png',
+        'images/character/lobby/animal/03.png',
+        'images/character/lobby/animal/04.png',
+        'images/character/lobby/animal/05.png',
+        'images/character/lobby/animal/06.png'
+    ];
+    let currentLobbyCharIdx = 0;
+    const lobbyCharImg = document.getElementById('lobby-char-img');
 
-        if (isGachaReady) {
-            if(timerDisplay) timerDisplay.innerText = "✅ 준비 완료";
-            if(topTimer) {
-                topTimer.innerHTML = '<span style="color:#27ae60;">뽑기 ✅ 완료</span>';
-                topTimer.style.borderColor = '#27ae60';
-                topTimer.style.backgroundColor = '#f0fff4';
-            }
-        } else {
-            if(timerDisplay) timerDisplay.innerText = `⏳ ${gachaTimer}s`;
-            if(topTimer) {
-                topTimer.innerHTML = `뽑기 ⏳ ${gachaTimer}s`;
-                topTimer.style.borderColor = '#f39c12';
-                topTimer.style.backgroundColor = '#fffdf2';
-            }
-        }
+    function updateLobbyChar() {
+        lobbyCharImg.style.opacity = 0;
+        setTimeout(() => {
+            lobbyCharImg.src = lobbyChars[currentLobbyCharIdx];
+            lobbyCharImg.style.opacity = 1;
+        }, 150);
+    }
+    window.prevLobbyChar = function() { currentLobbyCharIdx = (currentLobbyCharIdx - 1 + lobbyChars.length) % lobbyChars.length; updateLobbyChar(); }
+    window.nextLobbyChar = function() { currentLobbyCharIdx = (currentLobbyCharIdx + 1) % lobbyChars.length; updateLobbyChar(); }
 
-        // 1회 뽑기 조건 (골드100, 머지50, 타이머)
-        if (btn) {
-            if (gold >= 100 && mergeCount >= 50 && isGachaReady) {
-                btn.disabled = false; btn.style.opacity = 1;
-            } else {
-                btn.disabled = true; btn.style.opacity = 0.5;
-            }
-        }
+    let touchStartX = 0; let touchEndX = 0;
+    const lobbyTouchArea = document.getElementById('lobby-touch-area');
+    lobbyTouchArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    lobbyTouchArea.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleLobbySwipe(); }, {passive: true});
+    function handleLobbySwipe() {
+        if (touchEndX < touchStartX - 50) nextLobbyChar(); 
+        if (touchEndX > touchStartX + 50) prevLobbyChar(); 
     }
 
-    // ================= [ 데이터베이스 통합 & 티어 맵핑 ] =================
-    const TIER_ORDER = ['C', 'B', 'A', 'S', 'SS'];
-    // 요청 확률은 합계가 100%를 넘으므로 동일 비율의 가중치로 정규화하여 사용
-    const GACHA_WEIGHTS = { C: 90, B: 9.5, A: 0.49, S: 0.49, SS: 0.0002 };
-    function rollTier() {
-        const total = Object.values(GACHA_WEIGHTS).reduce((a,b)=>a+b,0);
-        let r = Math.random() * total;
-        for (const tier of TIER_ORDER) { r -= GACHA_WEIGHTS[tier]; if (r < 0) return tier; }
-        return 'C';
+    // ================= [ 설정 및 프로필 변경 스크립트 ] =================
+    window.openSettings = function() {
+        previousMenu = currentMenu; document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.getElementById('view-settings').classList.add('active'); document.getElementById('bottom-nav').style.display = 'none'; 
     }
-
-    // 💡 캐릭터 DB (존재하는 이미지 0~3번만 정확히 할당하여 오류 및 빈칸 원천 방지)
-    const CHARS_DB = { C: [0, 1], B: [2], A: [3], S: [], SS: [] };
-    const SKIN_DB = {
-        SS: ['images/bead/animal_lv11.png', 'images/bead/animal_lv12.png'],
-        S:  ['images/bead/animal_lv09.png', 'images/bead/animal_lv10.png', 'images/bead/dot_lv09.png', 'images/bead/dot_lv10.png'],
-        A:  ['images/bead/animal_lv07.png', 'images/bead/animal_lv08.png', 'images/bead/dot_lv07.png', 'images/bead/dot_lv08.png', 'images/bead/dot_lv06.png'],
-        B:  ['images/bead/animal_lv05.png', 'images/bead/animal_lv06.png', 'images/bead/dot_lv04.png', 'images/bead/dot_lv05.png', 'images/bead/dot_lv03.png'],
-        C:  ['images/bead/animal_lv01.png', 'images/bead/animal_lv02.png', 'images/bead/animal_lv03.png', 'images/bead/animal_lv04.png', 'images/bead/dot_lv01.png', 'images/bead/dot_lv02.png']
-    };
-    const ITEMS_DB = {
-        SS: ['🌌', '🌠', '🎆', '🎇', '👑'],
-        S:  ['🐉', '🦄', '🦅', '🦁', '🐯', '🦈', '🐙', '🦋', '🦖', '🦚'],
-        A:  ['🚀', '🛸', '🚁', '🛰️', '🎠', '🏎️', '🏍️', '🛳️', '🚄', '🚜'],
-        B:  ['💎', '💍', '🎩', '🔮', '🧿', '🏺', '🎭', '🎨', '🎲', '🧩', '🎸', '🎷'],
-        C:  ['🪴', '🧸', '📚', '☕', '📺', '🕹️', '🐈', '🖼️', '🕰️', '🛋️', '🛏️', '🌵', '📻', '🛹', '🪀']
-    };
-    const BG_DB = { C: [], B: [1, 2], A: [3], S: [4], SS: [5] };
-    // 캐릭터 로비 배경: 1번 기본, 2~5번 획득형
-    const CHAR_BG_DB = { C: [1], B: [2], A: [3], S: [4], SS: [5] };
-
-    let charInventory = {}; let charBgInventory = {}; let skinInventory = {}; let itemInventory = {}; let bgInventory = { bg_battle: {}, bg_merge: {}, bg_border: {} };
-    let SKINS_TIER_MAP = {}; let ITEMS_TIER_MAP = {};
-
-    TIER_ORDER.forEach(tier => {
-        CHARS_DB[tier].forEach(id => charInventory[id] = { tier, count: 0 });
-        CHAR_BG_DB[tier].forEach(id => charBgInventory[id] = { tier, count: 0 });
-        SKIN_DB[tier].forEach(id => { skinInventory[id] = { tier, count: 0 }; SKINS_TIER_MAP[id] = tier; });
-        ITEMS_DB[tier].forEach(id => { itemInventory[id] = { tier, count: 0 }; ITEMS_TIER_MAP[id] = tier; });
-        BG_DB[tier].forEach(id => {
-            bgInventory.bg_battle[id] = { tier, count: 0 };
-            bgInventory.bg_merge[id] = { tier, count: 0 };
-            bgInventory.bg_border[id] = { tier, count: 0 };
+    window.closeSettings = function() {
+        document.getElementById('view-settings').classList.remove('active'); document.getElementById('view-' + previousMenu).classList.add('active');
+        document.getElementById('bottom-nav').style.display = 'flex';
+    }
+    window.changeUserName = function() {
+        const newName = prompt("새로운 이름을 입력하세요.", userName);
+        if(newName && newName.trim() !== "") { userName = newName.trim(); document.getElementById('settings-user-name').innerText = userName; showFloatingText("이름이 변경되었습니다!", window.innerWidth/2 - 70, window.innerHeight/2, "#1dd1a1"); }
+    }
+    window.openProfileSelect = function() {
+        const grid = document.getElementById('profile-select-grid'); grid.innerHTML = '';
+        LEVELS.forEach((lv) => {
+            const img = document.createElement('img'); img.src = lv.img;
+            img.style.cssText = "width:65px; height:65px; object-fit:contain; cursor:pointer; background:#e8dff5; border-radius:12px; padding:5px;";
+            img.onclick = () => selectProfileImg(lv.img); grid.appendChild(img);
         });
-    });
-
-    // 초기 지급
-    if(charInventory[0]) charInventory[0].count = 1;
-    if(charBgInventory[1]) charBgInventory[1].count = 1;
-    skinInventory['images/bead/animal_lv01.png'].count = 1;
-    if(bgInventory.bg_battle[1]) bgInventory.bg_battle[1].count = 1;
-    if(bgInventory.bg_merge[1]) bgInventory.bg_merge[1].count = 1;
-    if(bgInventory.bg_border[1]) bgInventory.bg_border[1].count = 1;
-
-    let bgConfig = { battle: 1, merge: 1, border: 1 };
-    let equippedSkins = new Array(12).fill('images/bead/animal_lv01.png');
-    let selectedSkinLevel = 0; 
-    let globalCraftSlots = [];
-
-    // ================= [ 유틸리티 함수 ] =================
-    function getPool(category, tier) {
-        if (category === 'char') return CHARS_DB[tier] || [];
-        if (category === 'char_bg') return tier === 'C' ? [] : (CHAR_BG_DB[tier] || []);
-        if (category === 'skin') return SKIN_DB[tier] || [];
-        if (category === 'item') return ITEMS_DB[tier] || [];
-        if (category.startsWith('bg_')) return BG_DB[tier] || [];
-        return [];
+        document.getElementById('overlay-profile-select').style.display = 'flex';
+    }
+    window.selectProfileImg = function(src) { profileImgSrc = src; updateProfilePics(); closeProfileSelect(); }
+    window.closeProfileSelect = function() { document.getElementById('overlay-profile-select').style.display = 'none'; }
+    function updateProfilePics() {
+        const pics = [document.getElementById('top-profile-pic'), document.getElementById('settings-profile-pic')];
+        pics.forEach(pic => { if (profileImgSrc) pic.innerHTML = `<img src="${profileImgSrc}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`; else pic.innerHTML = '👩'; });
     }
 
-    function getInventoryRef(cat) {
-        if(cat === 'item') return itemInventory;
-        if(cat === 'skin') return skinInventory;
-        if(cat === 'char') return charInventory;
-        if(cat === 'char_bg') return charBgInventory;
-        if(cat.startsWith('bg_')) return bgInventory[cat];
-        return null;
+    // ================= [ 💡 간식서리 미니게임 스크립트 (3x3 꽝 제거 버전) ] =================
+    let lockBoard = false; let foundCounts = {};
+    function updateRewardUI(emoji) {
+        const count = foundCounts[emoji]; const item = document.getElementById(`reward-${emoji}`); const countText = document.getElementById(`count-${emoji}`);
+        countText.innerText = `${count}/3`;
+        if (count === 1) { item.style.filter = 'grayscale(0.6)'; item.style.opacity = '0.8'; } 
+        else if (count === 2) { item.style.filter = 'grayscale(0.3)'; item.style.opacity = '0.9'; } 
+        else if (count >= 3) { item.style.filter = 'grayscale(0)'; item.style.opacity = '1'; item.style.background = 'rgba(255, 255, 255, 0.3)'; item.style.borderColor = '#f6e58d'; }
     }
 
-    function getHtmlForCategoryAndId(cat, id) {
-        if (cat === 'item') return `<div class="emoji" style="font-size:24px;">${id}</div>`;
-        if (cat === 'skin') return `<img src="${id}" style="width:30px; height:30px; object-fit:contain;">`;
-        if (cat === 'char') return `<img src="images/character/lobby/body/${(id+1).toString().padStart(2, '0')}.png" style="width:30px; height:30px; object-fit:contain;">`;
-        if (cat === 'char_bg') return `<img src="images/bg/lobby/${String(id).padStart(2, '0')}.png" style="width:30px; height:30px; object-fit:cover; border-radius:4px;">`;
-        if (cat.startsWith('bg_')) {
-            let path = '';
-            if(cat==='bg_battle') path = `images/bg/bt/bt_bg0${id}.png`;
-            if(cat==='bg_merge') path = `images/bg/merge/merge_bg0${id}.png`;
-            if(cat==='bg_border') path = `images/bg/merge/merge_guide0${id}.png`;
-            return `<img src="${path}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;">`;
+    function triggerSnackHeistEvent() {
+        isMinigameActive = true; foundCounts = { '🍰': 0, '🍕': 0, '🍿': 0 }; lockBoard = false;
+        const overlay = document.getElementById('minigame-overlay'); const grid = document.getElementById('memory-grid'); grid.innerHTML = '';
+        ['🍰', '🍕', '🍿'].forEach(emoji => {
+            const item = document.getElementById(`reward-${emoji}`); const countText = document.getElementById(`count-${emoji}`);
+            item.style.filter = 'grayscale(1)'; item.style.opacity = '0.6'; countText.innerText = '0/3';
+            item.style.background = 'rgba(255,255,255,0.1)'; item.style.borderColor = 'rgba(255,255,255,0.3)';
+        });
+        document.getElementById('minigame-result').style.display = 'none'; document.getElementById('minigame-result').className = ''; overlay.style.display = 'flex';
+        
+        // 총 9개 (꽝 없음)
+        let cardEmojis = [ '🍰', '🍰', '🍰', '🍕', '🍕', '🍕', '🍿', '🍿', '🍿' ];
+        cardEmojis.sort(() => Math.random() - 0.5);
+        cardEmojis.forEach((emoji) => {
+            const card = document.createElement('div'); card.className = 'memory-card'; card.dataset.emoji = emoji; card.innerText = '❓';
+            card.onclick = () => flipCard(card); grid.appendChild(card);
+        });
+    }
+
+    window.flipCard = function(card) {
+        if (card.classList.contains('flipped') || lockBoard) return;
+        card.classList.add('flipped'); const emoji = card.dataset.emoji; card.innerText = emoji;
+        foundCounts[emoji]++; updateRewardUI(emoji);
+
+        if (foundCounts[emoji] === 3) {
+            lockBoard = true; let baseReward = 0;
+            if (emoji === '🍰') baseReward = 200; else if (emoji === '🍕') baseReward = 150; else if (emoji === '🍿') baseReward = 100;
+            const finalReward = baseReward * multiplier; const resultEl = document.getElementById('minigame-result');
+            resultEl.innerHTML = ` <div style="font-size:60px; margin-bottom:10px;">🎉</div><div style="color:#f6e58d;">간식서리 대성공!</div><div style="font-size:24px; color:#1dd1a1; margin-top:5px;">+${finalReward} 🪙</div> `;
+            resultEl.style.display = 'flex'; resultEl.className = 'pop-zoom';
+            
+            for(let i=0; i<15; i++) {
+                setTimeout(() => {
+                    const conf = document.createElement('div'); conf.innerText = emoji; conf.style.position = 'absolute';
+                    conf.style.left = (Math.random() * 80 + 10) + '%'; conf.style.top = (Math.random() * 80 + 10) + '%';
+                    conf.style.fontSize = (20 + Math.random() * 20) + 'px'; conf.style.pointerEvents = 'none'; conf.style.animation = 'floatUp 1s forwards ease-out';
+                    resultEl.appendChild(conf);
+                }, i * 50);
+            }
+            setTimeout(() => {
+                gold += finalReward; updateEnergyUI(); document.getElementById('minigame-overlay').style.display = 'none';
+                resultEl.style.display = 'none'; isMinigameActive = false; lockBoard = false;
+            }, 2500);
         }
-        return '';
+    }
+
+    // ================= [ 합성 순서 변경 스크립트 ] =================
+    window.openMergeOrder = function() {
+        tempImgs = LEVELS.map(l => l.img); tempOwned = [...roomItemsOwned]; tempEmojis = [...ROOM_EMOJIS]; selectedMergeIndex = -1;
+        renderMergeOrderGrid(); document.getElementById('view-settings').classList.remove('active'); document.getElementById('view-merge-order').classList.add('active');
+    }
+    window.closeMergeOrder = function() {
+        document.getElementById('view-merge-order').classList.remove('active'); document.getElementById('view-settings').classList.add('active');
+    }
+    function renderMergeOrderGrid() {
+        const grid = document.getElementById('merge-order-grid'); grid.innerHTML = '';
+        tempImgs.forEach((src, i) => {
+            const item = document.createElement('div'); item.className = 'merge-item' + (i === selectedMergeIndex ? ' selected' : '');
+            item.innerHTML = ` <div class="merge-item-rank">${i + 1}</div><img src="${src}" style="width:45px; height:45px; object-fit:contain; margin-bottom:5px;"><div style="font-size:11px; font-weight:bold; color:#4a4e69;">Lv.${i+1}</div> `;
+            item.onclick = () => handleMergeItemClick(i); grid.appendChild(item);
+        });
+    }
+    function handleMergeItemClick(i) {
+        if (selectedMergeIndex === -1) { selectedMergeIndex = i; } 
+        else if (selectedMergeIndex === i) { selectedMergeIndex = -1; } 
+        else {
+            let tImg = tempImgs[selectedMergeIndex]; tempImgs[selectedMergeIndex] = tempImgs[i]; tempImgs[i] = tImg;
+            let tOwn = tempOwned[selectedMergeIndex]; tempOwned[selectedMergeIndex] = tempOwned[i]; tempOwned[i] = tOwn;
+            let tEmoji = tempEmojis[selectedMergeIndex]; tempEmojis[selectedMergeIndex] = tempEmojis[i]; tempEmojis[i] = tEmoji;
+            selectedMergeIndex = -1;
+        }
+        renderMergeOrderGrid();
+    }
+    window.saveMergeOrder = function() {
+        for(let i=0; i < LEVELS.length; i++) { LEVELS[i].img = tempImgs[i]; }
+        roomItemsOwned = [...tempOwned]; ROOM_EMOJIS.splice(0, ROOM_EMOJIS.length, ...tempEmojis);
+        updatePreview(); renderCharacterGrid(); renderMyRoom();
+        if (window.refreshActiveBodies) window.refreshActiveBodies();
+        closeMergeOrder(); showFloatingText("저장되었습니다! ✅", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
+    }
+
+    // ================= [ 상점 스크립트 ] =================
+    window.claimDailyReward = function() {
+        if (isDailyClaimed) { showFloatingText("오늘은 이미 받으셨습니다!", window.innerWidth/2 - 80, window.innerHeight/2, "#ff7675"); return; }
+        energy += 50; gold += 100; isDailyClaimed = true; updateEnergyUI();
+        const btn = document.getElementById('btn-daily'); btn.disabled = true; btn.innerHTML = "✅ 보상 획득 완료";
+        showFloatingText("일일 보상 획득! 🎁", window.innerWidth/2 - 60, window.innerHeight/2, "#1dd1a1");
+    }
+    window.buyEnergy = function(amount, cost) {
+        if (gold < cost) { showFloatingText("골드가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
+        gold -= cost; energy += amount; updateEnergyUI(); showFloatingText(`에너지 +${amount} ⚡`, window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1");
+    }
+    window.buyGold = function(amount, cost) {
+        if (energy < cost) { showFloatingText("에너지가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
+        energy -= cost; gold += amount; updateEnergyUI(); showFloatingText(`골드 +${amount} 🪙`, window.innerWidth/2 - 50, window.innerHeight/2, "#f6e58d");
+    }
+
+    // ================= [ 마이룸 스크립트 ] =================
+    function renderMyRoom() {
+        const display = document.getElementById('myroom-display'); display.innerHTML = '<div class="myroom-top-title">내 방 꾸미기</div>';
+        const grid = document.getElementById('myroom-grid'); grid.innerHTML = ''; document.getElementById('next-item-cost').innerText = nextRoomCost.toLocaleString();
+        ROOM_EMOJIS.forEach((emoji, i) => {
+            if(roomItemsOwned[i]) {
+                const pos = roomPositions[i]; const el = document.createElement('div');
+                el.style.cssText = `position:absolute; left:${pos.left}; top:${pos.top}; z-index:${pos.z}; font-size:45px; transform:translate(-50%, -50%); filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));`;
+                el.innerText = emoji; display.appendChild(el);
+            }
+            const item = document.createElement('div');
+            if(roomItemsOwned[i]) { item.className = 'room-shop-item owned'; item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status">✅ 배치 완료</div>`; } 
+            else { item.className = 'room-shop-item'; item.onclick = () => buyRoomItem(i); item.innerHTML = `<div class="emoji-icon">${emoji}</div><div class="status cost">${nextRoomCost.toLocaleString()} 🪙</div>`; }
+            grid.appendChild(item);
+        });
+    }
+    window.buyRoomItem = function(index) {
+        if (roomItemsOwned[index]) return; 
+        if (gold < nextRoomCost) { showFloatingText("골드가 부족합니다!", window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); return; }
+        gold -= nextRoomCost; updateEnergyUI(); roomItemsOwned[index] = true; nextRoomCost = Math.floor(nextRoomCost * 1.5);
+        showFloatingText("구매 완료! 🎉", window.innerWidth/2 - 50, window.innerHeight/2, "#1dd1a1"); renderMyRoom();
+    }
+
+    // ================= [ 네비게이션 ] =================
+    window.toggleMultiplier = function() {
+        multIndex = (multIndex + 1) % multList.length; multiplier = multList[multIndex]; document.getElementById('mult-label').innerText = 'x' + multiplier;
+        const btn = document.getElementById('btn-mult'); btn.style.transform = 'translateY(4px)'; setTimeout(() => btn.style.transform = 'translateY(0)', 100);
+        uiEnergy.parentElement.style.color = '#ff70a6'; setTimeout(() => uiEnergy.parentElement.style.color = '', 200);
+    }
+
+    window.switchMenu = function(menuId) {
+        currentMenu = menuId;
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); 
+        document.getElementById('view-' + menuId).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); 
+        document.getElementById('nav-' + menuId).classList.add('active');
+        
+        if (menuId === 'character') renderCharacterGrid(); 
+        if (menuId === 'myroom') renderMyRoom();
+        
+        if (menuId === 'battle') {
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 10);
+        }
+    }
+
+    function renderCharacterGrid() {
+        const grid = document.getElementById('char-grid-container'); grid.innerHTML = ''; 
+        LEVELS.forEach((lv, index) => {
+            const item = document.createElement('div'); item.className = 'char-item';
+            item.innerHTML = `<img src="${lv.img}" alt="Lv${index+1}"><div class="char-lv">Lv.${index + 1}</div>`; grid.appendChild(item);
+        });
+    }
+
+    // ================= [ 타격감 및 전투 시스템 (💡 이중 화이트 번 + 링 이펙트 반영) ] =================
+    function createMergeEffect(x, y, level) {
+        const effectContainer = document.createElement('div');
+        effectContainer.style.position = 'absolute';
+        effectContainer.style.left = x + 'px';
+        effectContainer.style.top = y + 'px';
+        effectContainer.style.pointerEvents = 'none';
+        effectContainer.style.zIndex = '15';
+
+        const size = 30 + (level * 10);
+
+        // 1. 화이트 번 (중앙에서 섬광)
+        const flash = document.createElement('div');
+        flash.style.position = 'absolute';
+        flash.style.width = size + 'px';
+        flash.style.height = size + 'px';
+        flash.style.background = 'radial-gradient(circle, rgba(255,255,255,1) 20%, rgba(255,255,255,0) 80%)';
+        flash.style.borderRadius = '50%';
+        flash.style.animation = 'whiteFlash 0.3s ease-out forwards';
+        
+        // 2. 뻗어나가는 링 이펙트
+        const ring = document.createElement('div');
+        ring.style.position = 'absolute';
+        ring.style.width = size + 'px';
+        ring.style.height = size + 'px';
+        ring.style.borderRadius = '50%';
+        ring.style.boxShadow = '0 0 10px #fff, inset 0 0 10px #fff';
+        ring.style.animation = 'ringExpand 0.4s ease-out forwards';
+
+        effectContainer.appendChild(flash);
+        effectContainer.appendChild(ring);
+        
+        document.getElementById('physics-area').appendChild(effectContainer);
+        
+        setTimeout(() => effectContainer.remove(), 400);
+
+        if (level >= 4) { appContainer.classList.add('merge-shake'); setTimeout(() => appContainer.classList.remove('merge-shake'), 150); }
     }
 
     function showFloatingText(text, x, y, color = '#fff') {
-        const app = document.getElementById('app');
         const el = document.createElement('div'); el.className = 'floating-text'; el.innerHTML = text;
         el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
-        app.appendChild(el); setTimeout(() => el.remove(), 1000);
+        document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
     }
 
-    function updateAllUIs() {
-        updateTopUI();
-        if (typeof updateGlobalCraftUI === 'function') updateGlobalCraftUI();
-        if (typeof updateSkinUI === 'function') updateSkinUI();
-        if (typeof initCharUI === 'function') initCharUI();
-        if (typeof initBgUI === 'function') initBgUI();
-        if (typeof updateItemUI === 'function') updateItemUI();
-    }
+    function activateFeverMode() {
+        if (isFeverMode) return;
+        isFeverMode = true; feverTime = 10; feverBanner.style.display = 'block'; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
+        document.getElementById('battle-stage').style.boxShadow = "0 0 20px #f6e58d, inset 0 4px 10px rgba(0,0,0,0.05)";
+        
+        heroEl.src = 'images/character/battle/01_victory.png'; heroEl.classList.add('happy');
+        setTimeout(() => { heroEl.src = 'images/character/battle/01_Idle.png'; heroEl.classList.remove('happy'); }, 2000);
 
-    // ================= [ 상점: 통합 뽑기 + 테스트 지급 ] =================
-    function generateDrops(times) {
-        const results = [];
-        const categories = ['item', 'skin', 'char', 'char_bg', 'bg_battle', 'bg_merge', 'bg_border'];
-        for (let i=0; i<times; i++) {
-            let tier = firstRewardForcesSS ? 'SS' : rollTier();
-            if (firstRewardForcesSS) firstRewardForcesSS = false;
-            let validCats = categories.filter(cat => getPool(cat, tier).length > 0);
-            if (validCats.length === 0) { tier = 'C'; validCats = categories.filter(cat => getPool(cat, tier).length > 0); }
-            if (validCats.length === 0) continue;
-            const pickedCat = validCats[Math.floor(Math.random() * validCats.length)];
-            const pool = getPool(pickedCat, tier);
-            const pickedId = pool[Math.floor(Math.random() * pool.length)];
-            const inv = getInventoryRef(pickedCat);
-            if (!inv || !inv[pickedId]) continue;
-            inv[pickedId].count++;
-            results.push({ category:pickedCat, id:pickedId, tier });
-        }
-        return results;
-    }
-
-    function showGachaResults(results, title='🎉 획득 성공! 🎉') {
-        setGlobalPause(true);
-        const resultEl = document.getElementById('event-result');
-        const hasSS = results.some(r => r.tier === 'SS');
-        resultEl.classList.toggle('ss-celebration', hasSS);
-        const header = hasSS ? `<div class="ss-rays">✨⭐🌟⭐✨</div><div class="ss-special-title">SS 획득!</div><div style="margin-top:5px;color:#fff3a0;font-weight:900;">LEGENDARY REWARD</div>` : `<h2 style="margin-bottom:20px; color:#f6e58d;">${title}</h2>`;
-        resultEl.innerHTML = `${header}<div id="gacha-grid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:20px; width:90%; max-width:360px;"></div><button class="action-btn" style="margin-top:30px;" onclick="closeGacha()">확인</button>`;
-        const grid = document.getElementById('gacha-grid');
-        results.forEach((drop, index) => {
-            setTimeout(() => {
-                if (!grid) return;
-                const imgHtml = getHtmlForCategoryAndId(drop.category, drop.id).replaceAll('30px', '40px').replace('24px', '30px');
-                const div = document.createElement('div');
-                div.className = `inv-item tier-box-${drop.tier} gacha-item-reveal`;
-                div.style.width='60px'; div.style.height='60px'; div.style.justifyContent='center';
-                div.innerHTML = `<div class="tier-label tier-${drop.tier}" style="position:absolute; top:-5px; left:50%; transform:translateX(-50%); font-size:9px;">${drop.tier}</div>${imgHtml}`;
-                grid.appendChild(div);
-            }, index * 80);
-        });
-        document.getElementById('event-overlay').style.display='flex';
-        resultEl.style.display='flex';
-    }
-
-    window.pullGacha = function(times) {
-        times = Math.max(1, Number(times) || 1);
-        if (!isGachaReady) { showFloatingText('아직 타이머가 돌고 있습니다!', 210, 400, '#ff7675'); return; }
-        if (gold < 100 || mergeCount < 50) { showFloatingText('골드 또는 머지 포인트가 부족합니다!', 210, 400, '#ff7675'); return; }
-        gold -= 100; mergeCount -= 50; isGachaReady=false; gachaTimer=10; updateTopUI();
-        showGachaResults(generateDrops(times));
-    };
-
-    window.grantTestItems = function(times=10) {
-        if (globalPause) return;
-        showGachaResults(generateDrops(Math.max(1, Number(times)||10)), '🧪 테스트 10개 지급!');
-    };
-
-    window.closeGacha = function() {
-        document.getElementById('event-overlay').style.display = 'none';
-        const resultEl = document.getElementById('event-result');
-        resultEl.style.display = 'none'; resultEl.classList.remove('ss-celebration');
-        setGlobalPause(false);
-        updateAllUIs();
-    }
-
-    // ================= [ 상점: 통합 합성 (Crafting) 시스템 ] =================
-    function getAllCraftableItems() {
-        let items = [];
-        TIER_ORDER.forEach(tier => {
-            CHARS_DB[tier].forEach(id => { if(charInventory[id].count > 1) items.push({category:'char', id, tier, count: charInventory[id].count}); });
-            CHAR_BG_DB[tier].forEach(id => { if(charBgInventory[id].count > 1) items.push({category:'char_bg', id, tier, count: charBgInventory[id].count}); });
-            SKIN_DB[tier].forEach(id => { if(skinInventory[id].count > 1) items.push({category:'skin', id, tier, count: skinInventory[id].count}); });
-            ITEMS_DB[tier].forEach(id => { if(itemInventory[id].count > 1) items.push({category:'item', id, tier, count: itemInventory[id].count}); });
-            BG_DB[tier].forEach(id => { 
-                if(bgInventory.bg_battle[id].count > 1) items.push({category:'bg_battle', id, tier, count: bgInventory.bg_battle[id].count});
-                if(bgInventory.bg_merge[id].count > 1) items.push({category:'bg_merge', id, tier, count: bgInventory.bg_merge[id].count});
-                if(bgInventory.bg_border[id].count > 1) items.push({category:'bg_border', id, tier, count: bgInventory.bg_border[id].count});
-            });
-        });
-        return items;
-    }
-
-    window.updateGlobalCraftUI = function() {
-        const container = document.getElementById('global-craft-slots');
-        if(!container) return;
-        container.innerHTML = '';
-        for(let i=0; i<10; i++) {
-            const slot = document.createElement('div');
-            const targetItem = globalCraftSlots[i];
-            slot.className = `craft-slot ${targetItem ? 'filled' : ''}`;
-            if(targetItem) {
-                slot.innerHTML = getHtmlForCategoryAndId(targetItem.category, targetItem.id);
-                slot.onclick = () => {
-                    globalCraftSlots.splice(i, 1);
-                    getInventoryRef(targetItem.category)[targetItem.id].count++;
-                    updateAllUIs();
-                };
+        feverInterval = setInterval(() => {
+            feverTime--; feverBanner.innerText = `🔥 피버 모드! 에너지 소모 무료 (${feverTime}s)`;
+            if (feverTime <= 0) {
+                clearInterval(feverInterval); isFeverMode = false; feverBanner.style.display = 'none';
+                document.getElementById('battle-stage').style.boxShadow = "inset 0 4px 10px rgba(0,0,0,0.05)";
+                showFloatingText("피버 종료", window.innerWidth/2 - 40, window.innerHeight/2, "#fff");
             }
-            container.appendChild(slot);
-        }
+        }, 1000);
+    }
+
+    function showEventOverlay(emoji, htmlMsg, duration, color) {
+        isEventPause = true;
+        if (window.gameEngine) window.gameEngine.timing.timeScale = 0; 
+        document.getElementById('drop-line').style.display = 'none';
+        document.getElementById('preview-ball').style.display = 'none';
+
+        const overlay = document.getElementById('event-overlay'); const resultEl = document.getElementById('event-result');
+        resultEl.innerHTML = ` <div style="font-size:80px; margin-bottom:10px; line-height:1; animation: popZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">${emoji}</div><div style="font-size:20px; font-weight:900; color:${color}; text-shadow: 0 4px 10px rgba(0,0,0,0.5); padding: 0 15px;">${htmlMsg}</div> `;
+        overlay.style.display = 'block'; resultEl.style.display = 'flex'; resultEl.className = 'pop-zoom';
         
-        const grid = document.getElementById('global-inventory-grid');
-        grid.innerHTML = '';
-        const craftables = getAllCraftableItems();
-        
-        TIER_ORDER.forEach(tier => {
-            const tierItems = craftables.filter(item => item.tier === tier);
-            if(tierItems.length > 0) {
-                const sep = document.createElement('div'); sep.className = `tier-separator sep-${tier}`; sep.innerText = `${tier} 등급 (합성 가능)`; grid.appendChild(sep);
-                tierItems.forEach(item => {
-                    const div = document.createElement('div'); div.className = `inv-item tier-box-${tier}`;
-                    div.onclick = () => {
-                        if(globalCraftSlots.length >= 10) { showFloatingText("칸이 꽉 찼습니다!", 210, 300, "#ff7675"); return; }
-                        if(globalCraftSlots.length > 0 && globalCraftSlots[0].tier !== tier) { showFloatingText("같은 등급만 올릴 수 있습니다!", 210, 300, "#ff7675"); return; }
-                        getInventoryRef(item.category)[item.id].count--;
-                        globalCraftSlots.push({category: item.category, id: item.id, tier: tier});
-                        updateAllUIs();
-                    };
-                    div.innerHTML = `<div class="tier-label tier-${tier}">${tier}</div>` + getHtmlForCategoryAndId(item.category, item.id) + `<div class="count">${item.count}</div>`;
-                    grid.appendChild(div);
-                });
-            }
-        });
+        setTimeout(() => {
+            overlay.style.display = 'none'; resultEl.style.display = 'none'; isEventPause = false;
+            if (window.gameEngine) window.gameEngine.timing.timeScale = 1; 
+            if (typeof updatePreview === 'function') updatePreview(); 
+        }, duration);
     }
 
-    window.clearGlobalCraft = function() {
-        while(globalCraftSlots.length > 0) {
-            const item = globalCraftSlots.pop();
-            getInventoryRef(item.category)[item.id].count++;
-        }
-        updateAllUIs();
-    }
-
-    window.autoFillGlobalCraft = function() {
-        let targetTier = globalCraftSlots.length > 0 ? globalCraftSlots[0].tier : null;
-        const craftables = getAllCraftableItems();
-        
-        if(!targetTier) {
-            for(let tier of TIER_ORDER) {
-                if(tier === 'SS') continue; 
-                const tierItems = craftables.filter(item => item.tier === tier);
-                let totalInTier = tierItems.reduce((sum, item) => sum + (item.count - 1), 0);
-                if(totalInTier >= 10) { targetTier = tier; break; }
-            }
-        }
-        if(!targetTier) { showFloatingText("여유 있는 등급(10개 이상)이 없습니다.", 210, 300, "#ff7675"); return; }
-        
-        let needed = 10 - globalCraftSlots.length;
-        const validItems = craftables.filter(item => item.tier === targetTier);
-        
-        for(let item of validItems) {
-            let avail = item.count - 1;
-            while(avail > 0 && needed > 0) {
-                getInventoryRef(item.category)[item.id].count--;
-                globalCraftSlots.push({category: item.category, id: item.id, tier: targetTier});
-                needed--; avail--;
-            }
-            if(needed <= 0) break;
-        }
-        updateAllUIs();
-    }
-
-    window.confirmGlobalCraft = function() {
-        if(globalCraftSlots.length < 10) { showFloatingText("합성 칸을 10개 채워주세요!", 210, 300, "#ff7675"); return; }
-        const currentTier = globalCraftSlots[0].tier;
-        const tierIndex = TIER_ORDER.indexOf(currentTier);
-        if(tierIndex === -1 || currentTier === 'SS') { showFloatingText("합성 불가 등급입니다.", 210, 300, "#ff7675"); return; }
-        
-        const nextTier = TIER_ORDER[tierIndex + 1];
-        const categories = ['item', 'skin', 'char', 'bg_battle', 'bg_merge', 'bg_border'];
-        let validCats = categories.filter(cat => getPool(cat, nextTier).length > 0);
-        if(validCats.length === 0) validCats = categories.filter(cat => getPool(cat, 'S').length > 0); 
-        
-        const pickedCat = validCats[Math.floor(Math.random() * validCats.length)];
-        const pool = getPool(pickedCat, nextTier);
-        const pickedId = pool[Math.floor(Math.random() * pool.length)];
-        
-        globalCraftSlots = []; 
-        getInventoryRef(pickedCat)[pickedId].count++; 
-        updateAllUIs();
-        
-        setGlobalPause(true);
-        const resultEl = document.getElementById('event-result');
-        let imgHtml = getHtmlForCategoryAndId(pickedCat, pickedId).replace('30px', '100px').replace('24px', '80px');
-        if(imgHtml.includes('width:30px')) imgHtml = imgHtml.replace('width:30px', 'width:100px').replace('height:30px', 'height:100px');
-        
-        resultEl.innerHTML = `<h2 style="margin-bottom:20px; color:#f6e58d;">🎉 합성 성공! 🎉</h2><div class="pop-zoom" style="display:flex; justify-content:center;">${imgHtml}</div><div style="font-size:24px; color:#3498db; font-weight:bold; margin-top:20px;">${nextTier} 등급 획득!</div><button class="action-btn" style="margin-top:30px; padding: 12px 24px; font-size:15px; border-radius:12px; border:2px solid #b9a0e6; background:#1dd1a1; color:white; font-weight:bold; cursor:pointer;" onclick="closeGacha()">확인</button>`;
-        document.getElementById('event-overlay').style.display = 'flex'; resultEl.style.display = 'flex';
-    }
-
-    // ================= [ 💡 캐릭터 시스템 (뷰 3) 우측 탭 디자인 반영 ] =================
-    const CHAR_CATEGORIES = [
-        { id: 'bg', name: '배경', type: 'ready', max: 5, path: 'images/bg/lobby/' },
-        { id: 'body', name: '바디', type: 'ready', max: 4, path: 'images/character/lobby/body/' },
-        { id: 'hair', name: '헤어', type: 'prep' },
-        { id: 'eyes', name: '눈', type: 'prep' },
-        { id: 'nose', name: '코', type: 'prep' },
-        { id: 'mouth', name: '입', type: 'prep' },
-        { id: 'top', name: '상의', type: 'prep' },
-        { id: 'bottom', name: '하의', type: 'prep' },
-        { id: 'hat', name: '모자', type: 'prep' },
-        { id: 'wrist', name: '손목', type: 'prep' },
-        { id: 'shoes', name: '신발', type: 'prep' },
-        { id: 'acc', name: '악세사리', type: 'prep' }
-    ];
-
-    let charConfig = { bg: 1, body: 0 };
-    let isCharItemZoneHidden = false;
-    let activeCharCategory = 'bg';
-
-    window.toggleCharItemZone = function(forceHide) {
-        const panel = document.getElementById('char-right-panel');
-        const btn = document.getElementById('char-toggle-btn');
-        if (!panel || !btn) return;
-
-        if (typeof forceHide === 'boolean') isCharItemZoneHidden = forceHide;
-        else isCharItemZoneHidden = !isCharItemZoneHidden;
-
-        panel.classList.toggle('hidden', isCharItemZoneHidden);
-        btn.innerText = isCharItemZoneHidden ? '▶' : '◀';
-        btn.setAttribute('aria-label', isCharItemZoneHidden ? '캐릭터 아이템 패널 열기' : '캐릭터 아이템 패널 닫기');
-    };
-
-    window.initCharUI = function() {
-        const catZone = document.getElementById('char-cat-zone');
-        const bgEl = document.getElementById('char-preview-bg');
-        const bodyEl = document.getElementById('char-preview-body');
-        if(!catZone) return;
-        if (bgEl) bgEl.src = `images/bg/lobby/${String(charConfig.bg).padStart(2, '0')}.png`;
-        if (bodyEl) bodyEl.src = `images/character/lobby/body/${String(charConfig.body + 1).padStart(2, '0')}.png`;
-        catZone.innerHTML = '';
-        CHAR_CATEGORIES.forEach(cat => {
-            const div = document.createElement('div');
-            div.className = `cat-tab ${cat.id === activeCharCategory ? 'active' : ''}`;
-            div.innerText = cat.name;
-            div.onclick = () => {
-                if(activeCharCategory === cat.id && !isCharItemZoneHidden) toggleCharItemZone(true);
-                else { if(isCharItemZoneHidden) toggleCharItemZone(false); selectCharCategory(cat.id); }
-            };
-            catZone.appendChild(div);
-        });
-        renderCharItems();
-    }
-
-    function selectCharCategory(catId) {
-        activeCharCategory = catId;
-        const catData = CHAR_CATEGORIES.find(c => c.id === catId);
-        document.querySelectorAll('.cat-tab').forEach(el => { el.classList.remove('active'); if(el.innerText === catData.name) el.classList.add('active'); });
-        document.getElementById('char-item-title').innerText = catData.name;
-        renderCharItems();
-    }
-
-    function renderCharItems() {
-        const list = document.getElementById('char-item-list');
-        if (!list) return;
-        list.innerHTML = '';
-        const catData = CHAR_CATEGORIES.find(c => c.id === activeCharCategory) || CHAR_CATEGORIES[0];
-
-        if (catData.type === 'prep') {
-            list.innerHTML = `<div style="grid-column: span 2; text-align: center; color: #b2bec3; font-size: 13px; margin-top: 30px; font-weight: bold;">준비중입니다</div>`;
-            return;
-        }
-
-        if (catData.id === 'body') {
-            // 💡 티어 디자인 완전 제거하고 깔끔한 박스로만 구성
-            TIER_ORDER.forEach(tier => {
-                CHARS_DB[tier].forEach(id => {
-                    const data = charInventory[id];
-                    if (!data) return;
-                    const div = document.createElement('div');
-                    div.className = `char-item-btn ${charConfig.body === id ? 'selected' : ''} ${data.count === 0 ? 'unowned' : ''} contain-mode`;
-                    const numStr = (id + 1).toString().padStart(2, '0');
-                    const imgSrc = `images/character/lobby/body/${numStr}.png`;
-                    div.innerHTML = `<div class="char-tier-badge">${tier}</div><img src="${imgSrc}" onerror="this.style.display='none';">${data.count > 0 ? `<div class="count">${data.count}</div>` : '<div class="lock-mark">🔒</div>'}`;
-                    if (data.count > 0) {
-                        div.onclick = () => { charConfig.body = id; document.getElementById('char-preview-body').src = imgSrc; renderCharItems(); };
-                    }
-                    list.appendChild(div);
-                });
-            });
-        } else if (catData.id === 'bg') {
-            for (let i = 1; i <= catData.max; i++) {
-                const data = charBgInventory[i] || { tier:'C', count:0 };
-                const owned = data.count > 0;
-                const div = document.createElement('div');
-                div.className = `char-item-btn ${charConfig.bg === i ? 'selected' : ''} ${owned ? '' : 'unowned'}`;
-                const numStr = i.toString().padStart(2, '0');
-                const imgSrc = `images/bg/lobby/${numStr}.png`;
-                div.innerHTML = `<div class="char-tier-badge">${data.tier}</div><img src="${imgSrc}" onerror="this.style.display='none';">${owned && data.count > 1 ? `<div class="count">${data.count}</div>` : ''}${owned ? '' : '<div class="lock-mark">🔒</div>'}`;
-                if (owned) div.onclick = () => { charConfig.bg=i; document.getElementById('char-preview-bg').src=imgSrc; renderCharItems(); };
-                list.appendChild(div);
-            }
-        }
-    }
-
-    // ================= [ 스킨 & 배경 & 아이템 UI 렌더링 ] =================
-    window.updateSkinUI = function() {
-        const skinGrid = document.getElementById('skin-equip-grid');
-        const preview = document.getElementById('skin-selected-preview');
-        if (!skinGrid) return;
-        skinGrid.innerHTML = '';
-
-        const currentLevel = Math.max(0, Math.min(11, selectedSkinLevel));
-        const currentSkin = equippedSkins[currentLevel];
-        if (preview) {
-            const ball = currentSkin
-                ? `<div class="skin-selected-ball" style="background:${LEVELS[currentLevel].color};"><img src="${currentSkin}" onerror="this.style.display='none'"></div>`
-                : `<div class="skin-selected-ball" style="background:${LEVELS[currentLevel].color};"></div>`;
-            preview.innerHTML = `${ball}<div class="skin-selected-info"><div class="skin-selected-level">Lv.${currentLevel+1} 구슬</div><div class="skin-selected-desc"><b>현재 장착 스킨</b>을 확인한 뒤 아래에서 원하는 스킨을 누르세요.<br>선택 즉시 이 레벨에 적용됩니다.</div></div>`;
-        }
-
-        for(let i = 0; i < 12; i++) {
-            const slot = document.createElement('div');
-            slot.className = `skin-slot ${selectedSkinLevel === i ? 'selected-slot' : ''}`;
-            slot.style.background = LEVELS[i].color;
-            slot.onclick = () => { selectedSkinLevel = i; updateSkinUI(); };
-            const imgHtml = equippedSkins[i] ? `<img src="${equippedSkins[i]}" style="width:82%; height:82%; object-fit:contain; pointer-events:none;">` : '';
-            slot.innerHTML = `${imgHtml}<div class="level-badge">Lv.${i+1}</div>`;
-            skinGrid.appendChild(slot);
-        }
-
-        const grid = document.getElementById('skin-inventory-grid');
-        if (!grid) return;
-        grid.innerHTML = `<div class="skin-card-hint">선택된 <b>Lv.${currentLevel+1}</b>에 장착할 스킨을 고르세요. 현재 장착 중인 스킨에는 ✓ 표시가 납니다.</div>`;
-        TIER_ORDER.forEach(tier => {
-            let addedHeader = false;
-            SKIN_DB[tier].forEach(item => {
-                const data = skinInventory[item];
-                if(!addedHeader) {
-                    const sep = document.createElement('div'); sep.className = `tier-separator sep-${tier}`; sep.innerText = `${tier} 등급 스킨`; grid.appendChild(sep); addedHeader = true;
-                }
-                const equippedHere = equippedSkins[currentLevel] === item;
-                const div = document.createElement('div');
-                div.className = `inv-item tier-box-${tier} ${data.count === 0 ? 'unowned' : ''}`;
-                if (data.count > 0) {
-                    div.onclick = () => { equipSkin(currentLevel, item); };
-                    div.title = equippedHere ? `Lv.${currentLevel+1}에 장착 중` : `Lv.${currentLevel+1}에 장착`;
-                }
-                div.innerHTML = `<div class="tier-label tier-${tier}">${tier}</div><img src="${item}" class="skin-img-icon" onerror="this.style.display='none'">${data.count > 0 ? `<div class="count">${data.count}</div>` : '<div class="lock-mark">🔒</div>'}${equippedHere ? '<div class="skin-equipped-badge">✓ 장착중</div>' : ''}`;
-                grid.appendChild(div);
-            });
-        });
-    }
-
-    function equipSkin(levelIndex, skinSrc) {
-        equippedSkins[levelIndex] = skinSrc;
-        updateSkinUI();
-        showFloatingText(`Lv.${levelIndex+1} 스킨 장착 완료!`, 210, 300, "#1dd1a1");
-        
-        if(typeof updatePreview === 'function') updatePreview(); 
-        if (window.world && window.Matter) {
-            const bodies = window.Matter.Composite.allBodies(window.world).filter(b => b.level === levelIndex && !b.isStatic);
-            bodies.forEach(b => {
-                const newBody = Matter.Bodies.circle(b.position.x, b.position.y, LEVELS[b.level].radius, {
-                    restitution: 0.3, friction: 0.1, render: window.getBodyRenderOptions(b.level)
-                });
-                Matter.Body.setVelocity(newBody, b.velocity);
-                newBody.level = b.level; newBody.isMerging = b.isMerging; newBody.spawnTime = b.spawnTime; newBody.rewardMultiplier = b.rewardMultiplier || 1;
-                Matter.Composite.remove(window.world, b); Matter.Composite.add(window.world, newBody);
-            });
-        }
-    }
-
-    window.initBgUI = function() {
-        ['bg_battle', 'bg_merge', 'bg_border'].forEach(type => {
-            const gridId = type === 'bg_battle' ? 'bg-battle-grid' : (type === 'bg_merge' ? 'bg-merge-grid' : 'bg-border-grid');
-            const grid = document.getElementById(gridId);
-            if(!grid) return;
-            grid.innerHTML = '';
-            const typeKey = type.replace('bg_', '');
-            let ownedCount = 0;
-
-            TIER_ORDER.forEach(tier => {
-                const ownedIds = (BG_DB[tier] || []).filter(id => bgInventory[type]?.[id]?.count > 0);
-                if (ownedIds.length === 0) return;
-
-                const sep = document.createElement('div');
-                sep.className = `tier-separator sep-${tier}`;
-                sep.innerText = `${tier} 등급`;
-                grid.appendChild(sep);
-
-                ownedIds.forEach(id => {
-                    const data = bgInventory[type][id];
-                    ownedCount += data.count;
-                    const div = document.createElement('div');
-                    div.className = `inv-item tier-box-${tier} ${bgConfig[typeKey] === id ? 'selected' : ''}`;
-                    let path = '';
-                    if(typeKey === 'battle') path = `images/bg/bt/bt_bg0${id}.png`;
-                    if(typeKey === 'merge') path = `images/bg/merge/merge_bg0${id}.png`;
-                    if(typeKey === 'border') path = `images/bg/merge/merge_guide0${id}.png`;
-                    div.innerHTML = `<div class="tier-label tier-${tier}">${tier}</div><img src="${path}" class="skin-img-icon" onerror="this.style.display='none'">${data.count > 1 ? `<div class="count">${data.count}</div>` : ''}`;
-                    div.onclick = () => {
-                        bgConfig[typeKey] = id;
-                        if (typeKey === 'battle') document.getElementById('battle-stage').style.backgroundImage = `url('${path}')`;
-                        if (typeKey === 'merge') document.getElementById('physics-bg').style.backgroundImage = `url('${path}')`;
-                        if (typeKey === 'border') document.getElementById('physics-guide').style.backgroundImage = `url('${path}')`;
-                        initBgUI();
-                    };
-                    grid.appendChild(div);
-                });
-            });
-
-            if (ownedCount === 0) grid.innerHTML = '<div class="empty-state">현재 보유한 배경이 없습니다.</div>';
-        });
-    }
-
-    const ITEM_COLLECTION_CATEGORIES = [
-        {id:'all', name:'전체'}, {id:'skin', name:'구슬 스킨'}, {id:'item', name:'이모지'},
-        {id:'char', name:'캐릭터'}, {id:'char_bg', name:'캐릭터 배경'}, {id:'game_bg', name:'게임 배경'}
-    ];
-    let activeItemCategory = 'all';
-
-    function getCollectionEntries(category) {
-        const out=[];
-        const add=(cat,id,tier,count,label)=>out.push({cat,id,tier,count,label});
-        TIER_ORDER.forEach(tier=>{
-            if (category==='all' || category==='skin') (SKIN_DB[tier]||[]).forEach(id=>add('skin',id,tier,skinInventory[id]?.count||0,'구슬 스킨'));
-            if (category==='all' || category==='item') (ITEMS_DB[tier]||[]).forEach(id=>add('item',id,tier,itemInventory[id]?.count||0,'이모지'));
-            if (category==='all' || category==='char') (CHARS_DB[tier]||[]).forEach(id=>add('char',id,tier,charInventory[id]?.count||0,'캐릭터'));
-            if (category==='all' || category==='char_bg') (CHAR_BG_DB[tier]||[]).forEach(id=>add('char_bg',id,tier,charBgInventory[id]?.count||0,'캐릭터 배경'));
-            if (category==='all' || category==='game_bg') {
-                (BG_DB[tier]||[]).forEach(id=>{
-                    add('bg_battle',id,tier,bgInventory.bg_battle[id]?.count||0,'전투 배경');
-                    add('bg_merge',id,tier,bgInventory.bg_merge[id]?.count||0,'머지 배경');
-                    add('bg_border',id,tier,bgInventory.bg_border[id]?.count||0,'머지 테두리');
-                });
-            }
-        });
-        return out;
-    }
-
-    window.setItemCategory = function(id) { activeItemCategory=id; updateItemUI(); };
-    window.updateItemUI = function() {
-        const tabs=document.getElementById('item-category-tabs');
-        const grid=document.getElementById('item-collection-grid');
-        const summary=document.getElementById('item-collection-summary');
-        if (!tabs || !grid) return;
-        tabs.innerHTML='';
-        ITEM_COLLECTION_CATEGORIES.forEach(c=>{
-            const b=document.createElement('button'); b.className=`collection-tab ${activeItemCategory===c.id?'active':''}`; b.innerText=c.name; b.onclick=()=>setItemCategory(c.id); tabs.appendChild(b);
-        });
-        const entries=getCollectionEntries(activeItemCategory);
-        const uniqueOwned=entries.filter(e=>e.count>0).length;
-        if (summary) summary.innerText=`보유 ${uniqueOwned} / ${entries.length}종 · 미획득 아이템도 도감에서 확인할 수 있습니다.`;
-        grid.innerHTML='';
-        TIER_ORDER.forEach(tier=>{
-            const tierEntries=entries.filter(e=>e.tier===tier);
-            if (!tierEntries.length) return;
-            const sep=document.createElement('div'); sep.className=`tier-separator sep-${tier}`; sep.innerText=`${tier} 등급 · ${tierEntries.filter(e=>e.count>0).length}/${tierEntries.length} 보유`; grid.appendChild(sep);
-            tierEntries.forEach(e=>{
-                const owned=e.count>0;
-                const div=document.createElement('div'); div.className=`inv-item tier-box-${tier} ${owned?'':'unowned'}`;
-                const visual=getHtmlForCategoryAndId(e.cat,e.id);
-                div.innerHTML=`<div class="tier-label tier-${tier}">${tier}</div>${visual}<div style="font-size:8px; margin-top:3px; text-align:center; line-height:1.05;">${e.label}</div>${owned?`<div class="count">${e.count}</div>`:'<div class="lock-mark">🔒</div>'}`;
-                grid.appendChild(div);
-            });
-        });
-    };
-
-    // 네비게이션
-    let currentMenu = 'battle';
-    window.switchMenu = function(menuId) {
-        const targetView = document.getElementById('view-' + menuId);
-        const targetNav = document.getElementById('nav-' + menuId);
-        if (!targetView || !targetNav) return;
-
-        currentMenu = menuId;
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        targetView.classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        targetNav.classList.add('active');
-
-        if (menuId === 'character') initCharUI();
-        else if (menuId === 'bg') initBgUI();
-        else if (menuId === 'item') updateItemUI();
-        else if (menuId === 'skin') updateSkinUI();
-        else if (menuId === 'shop') updateGlobalCraftUI();
-
-        if (typeof updatePreview === 'function') updatePreview();
-    }
-
-    // ================= [ 전투 배수 및 스킬 시스템 ] =================
-    // 배수는 "구슬을 떨어뜨리는 순간" 머지 포인트를 소비합니다.
-    // 해당 구슬의 rewardMultiplier가 이후 합성된 구슬로 계승되어 전투 보상에 반영됩니다.
-    const multList = [ { val:1, cost:0 }, { val:2, cost:2 }, { val:5, cost:5 }, { val:10, cost:10 } ];
-    let multIndex=0; let multiplier=1;
-
-    function refreshMultiplierUI() {
-        const cfg=multList[multIndex];
-        const label=document.getElementById('mult-label'); const cost=document.getElementById('mult-cost');
-        if(label) label.innerText='x'+cfg.val;
-        if(cost) cost.innerText=cfg.cost===0?'무료':`🔄 ${cfg.cost}/구슬`;
-    }
-    window.toggleMultiplier = function() {
-        multIndex=(multIndex+1)%multList.length; multiplier=multList[multIndex].val; refreshMultiplierUI();
-        const btn=document.getElementById('btn-mult'); if(btn){ btn.style.transform='translateY(4px)'; setTimeout(()=>btn.style.transform='',100); }
-    };
-
-    function consumeDropMultiplier() {
-        const cfg = multList[multIndex] || multList[0];
-        if (cfg.cost <= 0) return { usedMultiplier: 1, spentMerge: 0 };
-        if (mergeCount < cfg.cost) {
-            multIndex = 0; multiplier = 1; refreshMultiplierUI();
-            showFloatingText(`머지 부족 (${mergeCount}/${cfg.cost}) → x1`, 210, 355, '#ff7675');
-            return { usedMultiplier: 1, spentMerge: 0 };
-        }
-        mergeCount -= cfg.cost;
-        updateTopUI();
-        showFloatingText(`x${cfg.val} 구슬! 🔄 -${cfg.cost}`, 210, 355, '#a29bfe');
-        return { usedMultiplier: cfg.val, spentMerge: cfg.cost };
-    }
-
-    // 요청 확률의 분자 합계가 13이므로 비율을 그대로 유지한 13칸 가중치로 추첨합니다.
-    const BATTLE_REWARD_TABLE = [
-        { weight:2, type:'gold', amount:100, label:'+100 골드' },
-        { weight:2, type:'gold', amount:200, label:'+200 골드' },
-        { weight:2, type:'gold', amount:250, label:'+250 골드' },
-        { weight:1, type:'gold', amount:300, label:'+300 골드' },
-        { weight:1, type:'gold', amount:-30, label:'-30 골드' },
-        { weight:1, type:'gold', amount:-50, label:'-50 골드' },
-        { weight:2, type:'merge', amount:10, label:'+10 머지' },
-        { weight:2, type:'attack', amount:0, label:'단순 공격' }
-    ];
-
-    function rollBattleReward() {
-        const total = BATTLE_REWARD_TABLE.reduce((sum, r) => sum + r.weight, 0);
-        let roll = Math.random() * total;
-        for (const reward of BATTLE_REWARD_TABLE) {
-            roll -= reward.weight;
-            if (roll < 0) return reward;
-        }
-        return BATTLE_REWARD_TABLE[BATTLE_REWARD_TABLE.length - 1];
-    }
-
-    const heroEl = document.getElementById('hero'); const enemyEl = document.getElementById('enemy');
-
-    function playAttackSequence(hitCount, onHit, onComplete) {
-        hitCount = Math.max(1, Math.floor(hitCount || 1));
-        let hit = 0;
-        const doHit = () => {
-            heroEl.classList.add('attack');
-            setTimeout(() => {
-                heroEl.classList.remove('attack');
-                const hitEffect = document.createElement('div');
-                hitEffect.className = 'hit-effect-sprite';
-                hitEffect.innerText = hitCount >= 3 ? '💥🔥' : '💥';
-                document.getElementById('battle-stage').appendChild(hitEffect);
-                setTimeout(() => hitEffect.remove(), 260);
-                hit += 1;
-                if (typeof onHit === 'function') onHit(hit, hitCount);
-                if (hit < hitCount) setTimeout(doHit, 150);
-                else if (typeof onComplete === 'function') setTimeout(onComplete, 120);
-            }, 150);
-        };
-        doHit();
-    }
-    
-    function triggerBattle(mergeLevel=0, rewardMultiplier=1) {
-        if (globalPause) return;
-        const usedMultiplier = Math.max(1, Math.floor(Number(rewardMultiplier) || 1));
-
-        // 보스전: 배수는 데미지와 처치 골드 양쪽에 반영됩니다.
-        if (bossActive) {
-            const enemy = document.getElementById('enemy');
-            if (enemy) { enemy.innerText='👹'; enemy.className='character enemy slide-in boss-enemy'; }
-            playAttackSequence(1, () => {
-                const damage = 18 + (mergeLevel * 4) + Math.floor(Math.random() * 13);
-                damageBoss(damage, usedMultiplier);
-            });
-            return;
-        }
-
-        if (isBattling) return;
+    // 💡 전투(확률) 발생 로직 
+    function triggerBattle() {
+        if (isBattling || isMinigameActive || isEventPause) return; 
         isBattling = true;
 
-        const reward = rollBattleReward();
-        const attackHits = reward.type === 'attack' ? usedMultiplier : 1;
         const enemies = ['🦇', '🦹‍♂️', '👾', '🧛', '🧟', '🐉', '🐲'];
-        enemyEl.innerText = enemies[Math.floor(Math.random() * enemies.length)]; enemyEl.className = 'character enemy slide-in';
+        enemyEl.innerText = enemies[Math.floor(Math.random() * enemies.length)];
+        enemyEl.className = 'character enemy slide-in';
 
         setTimeout(() => {
-            playAttackSequence(attackHits, null, () => {
+            heroEl.src = 'images/character/battle/01_Attack.png';
+            heroEl.classList.add('attack');
+            
+            setTimeout(() => {
+                heroEl.src = isFeverMode ? 'images/character/battle/01_victory.png' : 'images/character/battle/01_Idle.png';
+                heroEl.classList.remove('attack'); 
                 enemyEl.className = 'character enemy explode';
+                if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
 
-                if (reward.type === 'gold') {
-                    const delta = reward.amount * usedMultiplier;
-                    gold = Math.max(0, gold + delta);
-                    updateTopUI();
-                    const sign = delta >= 0 ? '+' : '';
-                    showFloatingText(`${sign}${delta.toLocaleString()} 🪙${usedMultiplier>1 ? ` (x${usedMultiplier})` : ''}`, 235, 80, delta >= 0 ? '#f6e58d' : '#ff7675');
-                } else if (reward.type === 'merge') {
-                    const amount = reward.amount * usedMultiplier;
-                    awardMerge(amount, '전투 보상');
-                    showFloatingText(`🔄 +${amount}${usedMultiplier>1 ? ` (x${usedMultiplier})` : ''}`, 235, 80, '#a29bfe');
-                } else {
-                    updateTopUI();
-                    showFloatingText(`⚔️ 단순 공격 ${attackHits} HIT${usedMultiplier>1 ? ` (x${usedMultiplier})` : ''}`, 235, 80, '#ffffff');
+                // 💡 12가지 확률 세팅 (0 ~ 11 난수 생성)
+                const rand = Math.floor(Math.random() * 12);
+                let rewardText = null; let rewardColor = "#fff";
+                const rect = enemyEl.getBoundingClientRect(); 
+                const feverMult = isFeverMode ? 2 : 1; 
+
+                if (rand === 0) { 
+                    // [1] 1/12 확률: 간식서리 이벤트 발동
+                    enemyEl.className = 'character enemy'; isBattling = false; triggerSnackHeistEvent(); return;
+                } else if (rand === 1) { 
+                    // [2] 1/12 확률: 단순 공격 (처치)
+                    rewardText = `처치! ⚔️`; rewardColor = "#fff"; 
+                } else if (rand === 2) { 
+                    // [3] 1/12 확률: -1 방패 (배수 영향 없음)
+                    let msg = "";
+                    if (shields > 0) { 
+                        shields -= 1; msg = "방어가 뚫렸습니다...<br><span style='color:#ff7675'>방패 -1 🐶</span>"; 
+                    } else { 
+                        gold -= 50; if(gold < 0) gold = 0; msg = "방패 소진! 마이룸 피해 발생<br><span style='color:#ff7675'>-50 🪙</span>"; 
+                    }
+                    updateShieldUI(); showEventOverlay("😭", msg, 2000, "#ff7675");
+                } else if (rand === 3) { 
+                    // [4] 1/12 확률: +1 방패 (배수 영향 있음)
+                    const gained = 1 * multiplier; let actualGained = 0; let overflow = 0;
+                    if (shields + gained <= MAX_SHIELDS) { shields += gained; actualGained = gained; } 
+                    else { actualGained = MAX_SHIELDS - shields; overflow = gained - actualGained; shields = MAX_SHIELDS; }
+                    
+                    let extraMsg = "";
+                    if (overflow > 0) {
+                        const energyBonus = overflow * 10; energy += energyBonus; if (energy > 50) energy = 50;
+                        extraMsg = `<br><span style='font-size:14px; color:#1dd1a1;'>초과 보상: 에너지 +${energyBonus}⚡</span>`;
+                    }
+                    updateShieldUI(); updateEnergyUI();
+                    showEventOverlay("🎉", `방패 획득!<br><span style='color:#b9f6ca'>+${actualGained} 🐶</span>${extraMsg}`, 2000, "#b9f6ca");
+                } else if (rand >= 4 && rand <= 7) { 
+                    // [5] 4/12 확률: +100 골드 (배수 영향 있음)
+                    const amount = 100 * multiplier * feverMult; 
+                    gold += amount; rewardText = `+${amount} 🪙`; rewardColor = "#f6e58d"; 
+                } else if (rand === 8 || rand === 9) { 
+                    // [6] 2/12 확률: -20 골드 (배수 영향 없음)
+                    const amount = 20; 
+                    gold -= amount; if (gold < 0) gold = 0; 
+                    rewardText = `-${amount} 🪙`; rewardColor = "#ff7675"; 
+                } else if (rand === 10 || rand === 11) { 
+                    // [7] 2/12 확률: +15 에너지 (배수 영향 있음)
+                    const amount = 15 * multiplier;
+                    energy += amount; if (energy > 50) energy = 50; 
+                    rewardText = `+${amount} ⚡`; rewardColor = "#b9f6ca"; updateEnergyUI(); 
                 }
-
-                setTimeout(() => { if(!bossActive) enemyEl.className = 'character enemy'; isBattling = false; }, 400);
-            });
-        }, 180);
+                
+                updateEnergyUI();
+                if (rewardText !== null) { showFloatingText(rewardText, rect.left - 20, rect.top + 30, rewardColor); }
+                setTimeout(() => { enemyEl.className = 'character enemy'; if (rewardText !== null) isBattling = false; }, 400);
+                if (rewardText === null) { setTimeout(() => { isBattling = false; }, 2000); }
+            }, 150); 
+        }, 200); 
     }
 
-    // ================= [ 💡 Matter.js 물리 엔진 및 구슬 드롭 완벽 복구 ] =================
-    // 💡 캔버스 크기를 명시적으로 고정하여 무조건 100% 작동 보장
-    const CANVAS_WIDTH = 360; 
-    const CANVAS_HEIGHT = 330;
-
-    let LEVELS = [
-        { radius: 13.5, color: '#ffb8b8' }, { radius: 20, color: '#ff9c9c' }, { radius: 27, color: '#ff7f7f' },
-        { radius: 36, color: '#ff6666' }, { radius: 45, color: '#ff4d4d' }, { radius: 56, color: '#ff3333' },
-        { radius: 67, color: '#e60000' }, { radius: 81, color: '#cc0000' }, { radius: 97, color: '#b30000' },
-        { radius: 112, color: '#990000' }, { radius: 130, color: '#800000' }, { radius: 148, color: '#660000' }
-    ];
-
-    window.getBodyRenderOptions = function(level) {
-        const skinSrc = equippedSkins[level];
-        if (skinSrc) {
-            const scale = (LEVELS[level].radius * 2) / 256;
-            return { fillStyle: 'transparent', sprite: { texture: skinSrc, xScale: scale, yScale: scale } };
+    function consumeEnergy(amount, isDrop = false) {
+        if (isDrop && isFeverMode) return true;
+        if (energy < amount) { 
+            showFloatingText("에너지가 부족합니다.", window.innerWidth/2 - 60, window.innerHeight/2 + 20, "#ff7675"); 
+            if (isAutoDrop) toggleAutoDrop(); return false; 
         }
-        return { fillStyle: LEVELS[level].color };
-    };
+        energy -= amount; if (energy < 0) energy = 0; updateEnergyUI(); return true;
+    }
 
-    let isAutoDrop = false; let canDrop = true; let isGameOver = false; let isWarning = false; 
-    let tornadoTicks = 0; let invincibleEndTime = 0; let mergeQueue = []; 
-
+    // ================= [ 물리 엔진 Init ] =================
     window.onload = () => {
-        document.getElementById('char-preview-bg').src = `images/bg/lobby/${String(charConfig.bg).padStart(2, '0')}.png`;
-        document.getElementById('char-preview-body').src = `images/character/lobby/body/${String(charConfig.body + 1).padStart(2, '0')}.png`;
-        document.getElementById('battle-stage').style.backgroundImage = `url('images/bg/bt/bt_bg0${bgConfig.battle}.png')`;
-        document.getElementById('physics-bg').style.backgroundImage = `url('images/bg/merge/merge_bg0${bgConfig.merge}.png')`;
-        document.getElementById('physics-guide').style.backgroundImage = `url('images/bg/merge/merge_guide0${bgConfig.border}.png')`;
-        loadMergePackDaily();
-        updateAllUIs();
-        updateMergePackUI();
-        refreshMultiplierUI();
-
-        if (!window.Matter) {
-            console.error('Matter.js를 불러오지 못했습니다. 네트워크/CDN 연결을 확인해 주세요.');
-            return;
-        }
         const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events;
-        const physicsArea = document.getElementById('physics-area');
-
-        // V6: 보이는 데드라인과 실제 판정 DEADLINE_Y를 같은 좌표로 맞춤
-        const DEADLINE_Y = 60; // physics-area 내부 좌표
-        const deadlineLine = document.getElementById('deadline-line');
-        const warningBanner = document.getElementById('warning-banner');
-        const syncDeadlineVisual = () => {
-            const visualY = physicsArea.offsetTop + DEADLINE_Y;
-            if (deadlineLine) {
-                deadlineLine.style.top = `${visualY}px`;
-                deadlineLine.style.left = `${physicsArea.offsetLeft}px`;
-                deadlineLine.style.width = `${physicsArea.clientWidth}px`;
-                deadlineLine.style.right = 'auto';
-            }
-            if (warningBanner) warningBanner.style.top = `${visualY + 10}px`;
-        };
-        syncDeadlineVisual();
-        window.addEventListener('resize', syncDeadlineVisual);
         
-        // 안전하게 고정 캔버스 태그 동적 삽입
-        physicsArea.innerHTML = ''; 
-        const myCanvas = document.createElement('canvas');
-        myCanvas.width = CANVAS_WIDTH; myCanvas.height = CANVAS_HEIGHT;
-        physicsArea.appendChild(myCanvas);
+        const physicsArea = document.getElementById('physics-area');
+        const viewBattle = document.getElementById('view-battle');
+        
+        const isHidden = !viewBattle.classList.contains('active');
+        if (isHidden) { viewBattle.style.display = 'flex'; viewBattle.style.visibility = 'hidden'; }
+        
+        let width = physicsArea.clientWidth; 
+        let height = physicsArea.clientHeight;
 
-        const engine = Engine.create({ enableSleeping: false }); 
-        window.world = engine.world; 
-        window.gameRunner = Runner.create();
+        if (isHidden) { viewBattle.style.display = ''; viewBattle.style.visibility = ''; }
+
+        const engine = Engine.create({ enableSleeping: false }); const world = engine.world;
+        window.gameEngine = engine;
         
         const render = Render.create({
-            canvas: myCanvas,
-            engine: engine,
-            options: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio || 1 }
+            element: physicsArea, engine: engine,
+            options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
         });
 
-        Render.run(render); Runner.run(window.gameRunner, engine);
+        Render.run(render); Runner.run(Runner.create(), engine);
 
         const wallOptions = { isStatic: true, render: { fillStyle: 'transparent' } };
-        const floor = Bodies.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT + 50, CANVAS_WIDTH * 5, 100, wallOptions);
-        const leftWall = Bodies.rectangle(-50, CANVAS_HEIGHT / 2, 100, CANVAS_HEIGHT * 5, wallOptions);
-        const rightWall = Bodies.rectangle(CANVAS_WIDTH + 50, CANVAS_HEIGHT / 2, 100, CANVAS_HEIGHT * 5, wallOptions);
-        const ceiling = Bodies.rectangle(CANVAS_WIDTH / 2, -2000, CANVAS_WIDTH * 5, 1000, wallOptions);
-        Composite.add(window.world, [floor, leftWall, rightWall, ceiling]);
+        const floor = Bodies.rectangle(width / 2, height + 50, width * 5, 100, wallOptions);
+        const leftWall = Bodies.rectangle(-50, height / 2, 100, height * 5, wallOptions);
+        const rightWall = Bodies.rectangle(width + 50, height / 2, 100, height * 5, wallOptions);
+        const ceiling = Bodies.rectangle(width / 2, -800, width * 5, 100, wallOptions);
+        
+        Composite.add(world, [floor, leftWall, rightWall, ceiling]);
+
+        window.refreshActiveBodies = function() {
+            const bodies = Composite.allBodies(world).filter(b => b.level !== undefined);
+            bodies.forEach(b => { b.render.sprite.texture = LEVELS[b.level].img; });
+        };
+
+        window.addEventListener('resize', () => {
+            if (currentMenu !== 'battle') return; 
+            
+            let newWidth = physicsArea.clientWidth; let newHeight = physicsArea.clientHeight;
+            if(newWidth === 0 || newHeight === 0) return; 
+            
+            width = newWidth; height = newHeight;
+            render.bounds.max.x = width; render.bounds.max.y = height;
+            render.options.width = width; render.options.height = height;
+            
+            render.canvas.width = width * render.options.pixelRatio; 
+            render.canvas.height = height * render.options.pixelRatio;
+            render.context.setTransform(render.options.pixelRatio, 0, 0, render.options.pixelRatio, 0, 0);
+            
+            Matter.Body.setPosition(floor, { x: width / 2, y: height + 50 });
+            Matter.Body.setPosition(leftWall, { x: -50, y: height / 2 });
+            Matter.Body.setPosition(rightWall, { x: width + 50, y: height / 2 });
+        });
+
+        window.addEventListener('deviceorientation', (event) => {
+            let gamma = event.gamma || 0; let beta = event.beta || 0;
+            if (!isTiltActive && !isAutoDrop) return;
+            if (currentMenu !== 'battle' || isCrisis || isMinigameActive || isEventPause) return; 
+            
+            let adjustedBeta = beta - 45; const maxForce = 3; const sensitivity = 30;
+            let forceX = (gamma / sensitivity) * maxForce; let forceY = (adjustedBeta / sensitivity) * maxForce;
+            engine.gravity.x = Math.max(-maxForce, Math.min(maxForce, forceX));
+            engine.gravity.y = Math.max(-maxForce, Math.min(maxForce, 1 + forceY)); 
+        });
+
+        window.activateTiltTimer = function() {
+            isTiltActive = true; const tiltBtn = document.getElementById('btn-tilt'); tiltBtn.classList.add('active'); 
+            document.getElementById('tilt-label').style.display = 'none'; document.getElementById('tilt-cost').style.display = 'none'; document.getElementById('tilt-timer').style.display = 'block';
+            showFloatingText(`기기를 기울이세요! 📱`, window.innerWidth/2 - 65, window.innerHeight/2);
+            tiltTimeRemaining = 10.0; document.getElementById('tilt-timer').innerText = tiltTimeRemaining.toFixed(1) + 's';
+
+            tiltInterval = setInterval(() => {
+                tiltTimeRemaining -= 0.1;
+                if (tiltTimeRemaining <= 0 || isCrisis) {
+                    clearInterval(tiltInterval); isTiltActive = false; 
+                    if (!isAutoDrop) { engine.gravity.x = 0; engine.gravity.y = 1; }
+                    tiltBtn.classList.remove('active'); document.getElementById('tilt-label').style.display = 'block'; document.getElementById('tilt-cost').style.display = 'block'; document.getElementById('tilt-timer').style.display = 'none';
+                } else { document.getElementById('tilt-timer').innerText = tiltTimeRemaining.toFixed(1) + 's'; }
+            }, 100);
+        }
+
+        Events.on(engine, 'afterUpdate', () => {
+            if (isGameOver || isCrisis || isMinigameActive || isEventPause) return;
+            const bodies = Composite.allBodies(world).filter(b => b.level !== undefined && !b.isStatic);
+            let isOverflow = false; const now = Date.now();
+            for (let b of bodies) {
+                if (now - b.spawnTime > 1000 && b.position.y - LEVELS[b.level].radius <= DEADLINE_Y && Math.abs(b.velocity.y) < 0.3) { isOverflow = true; break; }
+            }
+
+            if (isOverflow && !isWarning) {
+                isWarning = true; warningTimeRemaining = 5.0; warningBanner.style.display = 'block';
+                warningInterval = setInterval(() => {
+                    warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
+                    if (warningTimeRemaining <= 0) { clearInterval(warningInterval); triggerCrisis(); }
+                }, 100);
+            } else if (!isOverflow && isWarning) { 
+                isWarning = false; clearInterval(warningInterval); warningBanner.style.display = 'none'; 
+            }
+        });
+
+        function triggerCrisis() {
+            isCrisis = true; isWarning = false; warningBanner.style.display = 'none';
+            if(isAutoDrop) toggleAutoDrop(); engine.gravity.x = 0; engine.gravity.y = 1; overlayCrisis.style.display = 'flex';
+        }
+
+        window.rescueGame = function() {
+            if (!consumeEnergy(COST_REVIVE)) return;
+            overlayCrisis.style.display = 'none';
+            let bodies = Composite.allBodies(world).filter(b => b.level !== undefined);
+            bodies.sort((a, b) => a.position.y - b.position.y);
+            const targets = bodies.slice(0, 3);
+            Composite.remove(world, targets);
+            showFloatingText(`위기 탈출!`, window.innerWidth/2 - 40, window.innerHeight/2, '#1dd1a1');
+            isCrisis = false; activateFeverMode(); 
+        }
+
+        window.giveUpGame = function() {
+            if (!consumeEnergy(COST_RESTART)) return;
+            overlayCrisis.style.display = 'none'; isGameOver = true;
+            
+            heroEl.style.filter = 'grayscale(1) brightness(0.6)';
+            wipeoutAnim.style.display = 'block'; appContainer.classList.add('shake-active');
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+
+            setTimeout(() => {
+                const bodies = Composite.allBodies(world).filter(b => b.level !== undefined); Composite.remove(world, bodies);
+                wipeoutAnim.style.display = 'none'; appContainer.classList.remove('shake-active'); 
+                heroEl.style.filter = 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))'; 
+                
+                showFloatingText(`싹쓸이 완료! 새 판 시작`, window.innerWidth/2 - 80, window.innerHeight/2, '#fff');
+                setTimeout(() => { isGameOver = false; isCrisis = false; updatePreview(); }, 500);
+            }, 1000);
+        }
+
+        window.useItem = function(itemType) {
+            if (isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'battle') return; 
+            if (itemType === 'tilt' && isTiltActive) { showFloatingText(`이미 작동 중! ⏳`, window.innerWidth/2 - 40, window.innerHeight/2); return; }
+            if (!consumeEnergy(itemCost)) return; 
+            const allBalls = Composite.allBodies(world).filter(b => b.level !== undefined);
+            
+            if (itemType === 'hammer') {
+                if(allBalls.length > 0) {
+                    const target = allBalls[Math.floor(Math.random() * allBalls.length)];
+                    const reward = (target.level + 1) * 30; gold += reward; updateEnergyUI(); Composite.remove(world, target); 
+                    showFloatingText(`뿅망치! +${reward}🪙`, target.position.x, target.position.y, '#f6e58d');
+                }
+            } else if (itemType === 'shake') {
+                allBalls.forEach(b => { const force = 0.12 * b.mass; Matter.Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * force, y: -force * 1.8 }); });
+                showFloatingText(`쉐이크 🌪️`, window.innerWidth/2 - 30, window.innerHeight/2);
+            } else if (itemType === 'tilt') {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission().then(permissionState => {
+                        if (permissionState === 'granted') { activateTiltTimer(); } 
+                        else { showFloatingText(`권한 필요! 📱`, window.innerWidth/2 - 40, window.innerHeight/2, "#ff7675"); energy += itemCost; updateEnergyUI(); }
+                    }).catch(console.error);
+                } else { activateTiltTimer(); }
+            }
+        };
+
+        const dropLine = document.getElementById('drop-line'); const previewImg = document.getElementById('preview-ball');
+        let nextDropLevel = Math.floor(Math.random() * 2); let canDrop = true; let lastMouseX = width / 2; 
+
+        window.updatePreview = function() {
+            const data = LEVELS[nextDropLevel]; previewImg.src = data.img; previewImg.style.width = (data.radius * 2) + 'px'; previewImg.style.height = (data.radius * 2) + 'px';
+            if (!isAutoDrop && currentMenu === 'battle' && !isGameOver && !isCrisis && !isMinigameActive && !isEventPause) previewImg.style.display = 'block';
+            else previewImg.style.display = 'none';
+        }
+        updatePreview();
+
+        physicsArea.addEventListener('pointerdown', (e) => { 
+            if (isAutoDrop || currentMenu !== 'battle' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return;
+            const rect = physicsArea.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
+            dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
+        });
+
+        physicsArea.addEventListener('pointermove', (e) => {
+            if(isGameOver || isCrisis || isAutoDrop || isMinigameActive || isEventPause || !canDrop || currentMenu !== 'battle') return;
+            const rect = physicsArea.getBoundingClientRect(); lastMouseX = e.clientX - rect.left;
+            dropLine.style.display = 'block'; dropLine.style.left = lastMouseX + 'px'; previewImg.style.left = lastMouseX + 'px';
+        });
+
+        physicsArea.addEventListener('pointerleave', () => { dropLine.style.display = 'none'; });
+
+        physicsArea.addEventListener('pointerup', (e) => { 
+            if (isAutoDrop || currentMenu !== 'battle' || isGameOver || isCrisis || isMinigameActive || isEventPause || !canDrop) return; executeDrop(lastMouseX); 
+        });
+
+        function executeDrop(xPos) {
+            if (!canDrop || isGameOver || isCrisis || isMinigameActive || isEventPause || currentMenu !== 'battle') return;
+            const currentCost = 1 * multiplier; if (!consumeEnergy(currentCost, true)) return;
+
+            const levelData = LEVELS[nextDropLevel]; const startX = Math.min(Math.max(xPos, levelData.radius), width - levelData.radius);
+            const body = Bodies.circle(startX, 20, levelData.radius, {
+                restitution: 0.3, friction: 0.1, render: { sprite: { texture: levelData.img, xScale: levelData.scale, yScale: levelData.scale } }
+            });
+            body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now();
+            Composite.add(world, body);
+
+            canDrop = false; previewImg.style.display = 'none'; dropLine.style.display = 'none';
+            setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
+        }
+
+        window.toggleAutoDrop = function() {
+            const runToggle = () => {
+                isAutoDrop = !isAutoDrop; const btnAuto = document.getElementById('btn-auto');
+                if (isAutoDrop) {
+                    btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewImg.style.display = 'none'; dropLine.style.display = 'none';
+                    autoDropTimer = setInterval(() => { if (canDrop && !isGameOver && !isCrisis && !isMinigameActive && !isEventPause && currentMenu === 'battle') { executeDrop(Math.random() * width); } }, 600);
+                    showFloatingText(`오토 & 틸트 ON! 🤖📱`, window.innerWidth/2 - 70, window.innerHeight/2);
+                } else {
+                    btnAuto.classList.remove('active'); document.getElementById('auto-label').innerText = '오토: OFF'; clearInterval(autoDropTimer); updatePreview();
+                    if (!isTiltActive) { engine.gravity.x = 0; engine.gravity.y = 1; }
+                }
+            };
+            if (!isAutoDrop && typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().then(permissionState => {
+                        if (permissionState === 'granted') { runToggle(); } 
+                        else { showFloatingText(`자이로 권한 필요! 📱`, window.innerWidth/2 - 60, window.innerHeight/2, "#ff7675"); }
+                }).catch(console.error);
+            } else { runToggle(); }
+        }
 
         Events.on(engine, 'collisionStart', (event) => {
             const pairs = event.pairs;
             for (let i = 0; i < pairs.length; i++) {
                 const bodyA = pairs[i].bodyA; const bodyB = pairs[i].bodyB;
                 if (bodyA.level !== undefined && bodyB.level !== undefined && bodyA.level === bodyB.level && !bodyA.isMerging && !bodyB.isMerging && bodyA.level < LEVELS.length - 1) {
-                    bodyA.isMerging = true; bodyB.isMerging = true;
-                    mergeQueue.push({ bodyA, bodyB, level: bodyA.level + 1 });
+                    bodyA.isMerging = true; bodyB.isMerging = true; const nextLevel = bodyA.level + 1;
+                    
+                    if (navigator.vibrate) {
+                        if (nextLevel <= 3) { navigator.vibrate(20 + nextLevel * 10); } 
+                        else if (nextLevel <= 7) { navigator.vibrate([30, 50, 20 + nextLevel * 10]); } 
+                        else { navigator.vibrate([50, 50, 50, 50, 100]); } 
+                    }
+                    setTimeout(() => {
+                        const midX = (bodyA.position.x + bodyB.position.x) / 2; const midY = (bodyA.position.y + bodyB.position.y) / 2;
+                        Composite.remove(world, [bodyA, bodyB]);
+                        const nextLevelData = LEVELS[nextLevel];
+                        const newBody = Bodies.circle(midX, midY, nextLevelData.radius, {
+                            restitution: 0.3, render: { sprite: { texture: nextLevelData.img, xScale: nextLevelData.scale, yScale: nextLevelData.scale } }
+                        });
+                        newBody.level = nextLevel; newBody.isMerging = false; newBody.spawnTime = Date.now(); 
+                        
+                        Matter.Body.setVelocity(newBody, { x: 0, y: -2.5 }); Composite.add(world, newBody); 
+                        createMergeEffect(midX, midY, nextLevel); triggerBattle();
+                    }, 50);
                 }
             }
         });
-
-        function createMergeEffect(x, y, level) {
-            const effectContainer = document.createElement('div');
-            effectContainer.style.position = 'absolute'; effectContainer.style.left = x + 'px'; effectContainer.style.top = y + 'px'; 
-            effectContainer.style.pointerEvents = 'none'; effectContainer.style.zIndex = '15';
-            const size = 30 + (level * 10);
-            const flash = document.createElement('div'); flash.style.position = 'absolute'; flash.style.width = size + 'px'; flash.style.height = size + 'px'; flash.style.background = 'radial-gradient(circle, rgba(255,255,255,1) 20%, rgba(255,255,255,0) 80%)'; flash.style.borderRadius = '50%'; flash.style.animation = 'whiteFlash 0.3s ease-out forwards';
-            const ring = document.createElement('div'); ring.style.position = 'absolute'; ring.style.width = size + 'px'; ring.style.height = size + 'px'; ring.style.borderRadius = '50%'; ring.style.boxShadow = '0 0 10px #fff, inset 0 0 10px #fff'; ring.style.animation = 'ringExpand 0.4s ease-out forwards';
-            flash.style.transform = 'translate(-50%, -50%)'; ring.style.transform = 'translate(-50%, -50%)';
-            effectContainer.appendChild(flash); effectContainer.appendChild(ring); physicsArea.appendChild(effectContainer); setTimeout(() => effectContainer.remove(), 400);
-            if (level >= 4) { document.getElementById('app').classList.add('merge-shake'); setTimeout(() => document.getElementById('app').classList.remove('merge-shake'), 150); }
-        }
-
-        Events.on(engine, 'beforeUpdate', () => {
-            if (globalPause) return;
-            if (tornadoTicks > 0) {
-                tornadoTicks--; const cx = CANVAS_WIDTH / 2;
-                Composite.allBodies(window.world).filter(b => b.level !== undefined).forEach(b => { Matter.Body.applyForce(b, b.position, { x: (cx - b.position.x) * 0.00003 + (Math.random() - 0.5) * 0.0005 * b.mass, y: -0.0025 * b.mass }); });
-            }
-            if (mergeQueue.length > 0) {
-                mergeQueue.forEach(merge => {
-                    const midX = (merge.bodyA.position.x + merge.bodyB.position.x) / 2; const midY = (merge.bodyA.position.y + merge.bodyB.position.y) / 2;
-                    Composite.remove(window.world, [merge.bodyA, merge.bodyB]);
-                    const nextLevelData = LEVELS[merge.level]; const newBody = Bodies.circle(midX, midY, nextLevelData.radius, { restitution: 0.3, friction: 0.1, render: window.getBodyRenderOptions(merge.level) });
-                    const battleMultiplier = Math.max(merge.bodyA.rewardMultiplier || 1, merge.bodyB.rewardMultiplier || 1);
-                    newBody.level = merge.level; newBody.isMerging = false; newBody.spawnTime = Date.now(); newBody.rewardMultiplier = 1;
-                    Matter.Body.setVelocity(newBody, { x: 0, y: -2.5 }); Composite.add(window.world, newBody); 
-                    createMergeEffect(midX, midY, merge.level);
-                    awardMerge(1, '머지');
-                    triggerBattle(merge.level, battleMultiplier); 
-                });
-                mergeQueue = []; 
-            }
-            const allBodies = Composite.allBodies(window.world);
-            allBodies.forEach(b => { if (b.position.y > CANVAS_HEIGHT + 200) Composite.remove(window.world, b); });
-        });
-
-        // 전투 아이템 비용: 골드 100/200/300
-        window.useItem = function(itemType) {
-            if (isGameOver || globalPause || currentMenu !== 'battle') return; 
-            let cost = (itemType === 'tornado') ? 300 : (itemType === 'hammer' ? 100 : 200);
-            const allBalls = Composite.allBodies(window.world).filter(b => b.level !== undefined);
-            if (itemType === 'hammer' && allBalls.length === 0) { showFloatingText('파괴할 구슬이 없습니다!', 210, 400, '#ff7675'); return; }
-            if (itemType === 'tornado' && tornadoTicks > 0) { showFloatingText('토네이도가 이미 발동 중입니다!', 210, 400, '#ff7675'); return; }
-            if (gold < cost) { showFloatingText(`골드가 부족합니다! 🪙 ${cost}`, 210, 400, "#ff7675"); return; }
-            gold -= cost; updateTopUI();
-
-            if (itemType === 'hammer') {
-                const target = allBalls[Math.floor(Math.random() * allBalls.length)];
-                Composite.remove(window.world, target); showFloatingText(`파괴! 🔨`, target.position.x + 20, target.position.y, '#fff');
-            } else if (itemType === 'shake') {
-                // BIG SHAKE: 구슬을 실제로 위쪽 배경 밖까지 크게 발사한 뒤 중력으로 다시 떨어뜨립니다.
-                // 아래쪽으로 삭제되는 조건(y > CANVAS_HEIGHT + 200)은 건드리지 않으며, 위쪽에는 충분한 천장 여유가 있습니다.
-                allBalls.forEach((b, index) => {
-                    const vx = (Math.random() - 0.5) * 18;       // 강한 좌우 확산
-                    const vy = -(18 + Math.random() * 10);      // 화면 위로 크게 이탈할 정도의 상승 속도
-                    Matter.Body.setVelocity(b, { x: vx, y: vy });
-                    Matter.Body.setAngularVelocity(b, (Math.random() - 0.5) * 0.45);
-                    // 한 점에서만 튀지 않도록 약간의 추가 좌우 힘
-                    Matter.Body.applyForce(b, b.position, { x: (Math.random()-0.5) * 0.004 * b.mass, y: -0.001 * b.mass });
-                });
-                showFloatingText(`SUPER SHAKE! 🌪️⬆️`, 210, 400, '#f6e58d');
-                invincibleEndTime = Date.now() + 7000;
-                isWarning = false;
-                document.getElementById('warning-banner').style.display='none';
-            } else if (itemType === 'tornado' && tornadoTicks <= 0) {
-                engine.gravity.y = 2.0; setTimeout(() => { engine.gravity.y = 1.0; }, 3500);
-                showFloatingText(`토네이도 발동! 🌀`, 210, 400, "#78e08f");
-                tornadoTicks = 180; invincibleEndTime = Date.now() + 10000; isWarning = false; document.getElementById('warning-banner').style.display='none';
-                const btn = document.getElementById('btn-tornado'); btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 3000);
-            }
-        };
-
-        const dropLine = document.getElementById('drop-line'); const previewDiv = document.getElementById('preview-ball');
-        let nextDropLevel = Math.floor(Math.random() * 2); let lastMouseX = CANVAS_WIDTH / 2; 
-
-        window.updatePreview = function() {
-            const data = LEVELS[nextDropLevel]; const skinSrc = equippedSkins[nextDropLevel];
-            previewDiv.style.width = (data.radius * 2) + 'px'; previewDiv.style.height = (data.radius * 2) + 'px'; 
-            if (skinSrc) {
-                previewDiv.style.backgroundColor = 'transparent'; previewDiv.style.border = 'none';
-                previewDiv.innerHTML = `<img src="${skinSrc}" style="width:100%; height:100%; object-fit:contain; border-radius:50%; opacity:0.8;">`;
-            } else {
-                previewDiv.innerHTML = ''; previewDiv.style.backgroundColor = data.color; previewDiv.style.border = '2px solid rgba(255,255,255,0.5)';
-            }
-            if (!isAutoDrop && currentMenu === 'battle' && !isGameOver && !globalPause) previewDiv.style.display = 'flex'; else previewDiv.style.display = 'none';
-        }
-        updatePreview();
-
-        const catcher = document.getElementById('touch-catcher'); let isDragging = false;
-        
-        catcher.addEventListener('pointerdown', (e) => { 
-            if (isAutoDrop || currentMenu !== 'battle' || isGameOver || globalPause || !canDrop) return;
-            isDragging = true; const rect = catcher.getBoundingClientRect(); const levelData = LEVELS[nextDropLevel];
-            let rawX = e.clientX - rect.left; lastMouseX = Math.min(Math.max(rawX, levelData.radius), CANVAS_WIDTH - levelData.radius);
-            dropLine.style.display = 'block'; previewDiv.style.left = lastMouseX + 'px'; dropLine.style.left = lastMouseX + 'px'; catcher.setPointerCapture(e.pointerId);
-        });
-        catcher.addEventListener('pointermove', (e) => {
-            if(!isDragging) return; const rect = catcher.getBoundingClientRect(); const levelData = LEVELS[nextDropLevel];
-            let rawX = e.clientX - rect.left; lastMouseX = Math.min(Math.max(rawX, levelData.radius), CANVAS_WIDTH - levelData.radius);
-            dropLine.style.display = 'block'; previewDiv.style.left = lastMouseX + 'px'; dropLine.style.left = lastMouseX + 'px';
-        });
-        catcher.addEventListener('pointerup', (e) => { 
-            if (!isDragging) return; isDragging = false; catcher.releasePointerCapture(e.pointerId);
-            if (isAutoDrop || currentMenu !== 'battle' || isGameOver || globalPause || !canDrop) { dropLine.style.display = 'none'; return; }
-            window.executeDrop(lastMouseX); 
-        });
-        catcher.addEventListener('pointercancel', (e) => { if (!isDragging) return; isDragging = false; catcher.releasePointerCapture(e.pointerId); dropLine.style.display = 'none'; });
-
-        window.executeDrop = function(xPos) {
-            if (!window.world || !canDrop || isGameOver || globalPause || currentMenu !== 'battle') return;
-            const levelData = LEVELS[nextDropLevel]; const startX = Math.min(Math.max(Number(xPos) || CANVAS_WIDTH / 2, levelData.radius), CANVAS_WIDTH - levelData.radius);
-            const multUse = consumeDropMultiplier();
-            const body = Bodies.circle(startX, 20, levelData.radius, { restitution: 0.3, friction: 0.1, render: window.getBodyRenderOptions(nextDropLevel) });
-            body.level = nextDropLevel; body.isMerging = false; body.spawnTime = Date.now(); body.rewardMultiplier = multUse.usedMultiplier; Composite.add(window.world, body);
-            canDrop = false; previewDiv.style.display = 'none'; dropLine.style.display = 'none';
-            setTimeout(() => { canDrop = true; nextDropLevel = Math.floor(Math.random() * 2); updatePreview(); }, 500);
-        }
-
-        window.toggleAutoDrop = function() {
-            isAutoDrop = !isAutoDrop; const btnAuto = document.getElementById('btn-auto');
-            if (isAutoDrop) {
-                btnAuto.classList.add('active'); document.getElementById('auto-label').innerText = '오토: ON'; previewDiv.style.display = 'none'; dropLine.style.display = 'none'; showFloatingText(`오토 드롭 ON! 🤖`, 210, 400);
-            } else {
-                btnAuto.classList.remove('active'); document.getElementById('auto-label').innerText = '오토: OFF'; updatePreview();
-            }
-        }
-        
-        let autoDropTick = 0;
-        setInterval(() => {
-            if (globalPause) return;
-            if (isAutoDrop && currentMenu === 'battle' && !isGameOver) {
-                autoDropTick++;
-                if (autoDropTick >= 6) { autoDropTick = 0; if (canDrop) window.executeDrop(Math.random() * (CANVAS_WIDTH - 40) + 20); }
-            }
-        }, 100);
-
-        let warningTimeRemaining = 5.0; let restartCountdown = null;
-        setInterval(() => {
-            if (isGameOver || globalPause) { if (isWarning) { isWarning = false; warningBanner.style.display = 'none'; } return; }
-            if (Date.now() < invincibleEndTime) { if(isWarning) { isWarning = false; warningBanner.style.display = 'none'; warningTimeRemaining = 5.0; } return; }
-            const bodies = Composite.allBodies(window.world).filter(b => b.level !== undefined && !b.isStatic);
-            let isOverflow = false; const now = Date.now();
-            for (let b of bodies) {
-                if (now - b.spawnTime > 3000 && b.position.y > 0 && b.position.y - LEVELS[b.level].radius <= DEADLINE_Y && Math.abs(b.velocity.y) < 0.1 && Math.abs(b.velocity.x) < 0.1 && b.speed < 0.1) { 
-                    isOverflow = true; break; 
-                }
-            }
-
-            if (isOverflow && !isWarning) { isWarning = true; warningTimeRemaining = 5.0; warningBanner.style.display = 'block';
-            } else if (isOverflow && isWarning) {
-                warningTimeRemaining -= 0.1; warningBanner.innerText = `⚠️ 위험! ${Math.max(0, warningTimeRemaining).toFixed(1)}초`;
-                if (warningTimeRemaining <= 0) {
-                    isGameOver = true; isWarning = false; warningBanner.style.display = 'none'; setGlobalPause(true); 
-                    document.getElementById('overlay-gameover').style.display = 'flex'; let timeLeft = 3; document.getElementById('go-timer').innerText = timeLeft;
-                    restartCountdown = setInterval(() => {
-                        timeLeft--; if(timeLeft > 0) { document.getElementById('go-timer').innerText = timeLeft; } else { clearInterval(restartCountdown); window.restartGame(); }
-                    }, 1000);
-                }
-            } else if (!isOverflow && isWarning) { isWarning = false; warningBanner.style.display = 'none'; }
-        }, 100);
-
-        window.instantRestart = function() { if(restartCountdown) clearInterval(restartCountdown); window.restartGame(); }
-        window.restartGame = function() {
-            document.getElementById('overlay-gameover').style.display = 'none';
-            const bodies = Composite.allBodies(window.world).filter(b => b.level !== undefined); Composite.remove(window.world, bodies);
-            isGameOver = false; setGlobalPause(false); updatePreview();
-        }
     };
 </script>
 </body>
